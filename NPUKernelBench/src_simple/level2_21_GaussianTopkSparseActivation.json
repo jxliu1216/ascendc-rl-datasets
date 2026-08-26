@@ -1,0 +1,10 @@
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "float32", "shape": [1, 1, 64]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.5}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [2, 29, 256]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.78}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [7, 32, 128]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.15}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "float16", "shape": [2, 19, 1024]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.67}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [2, 32, 1536]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.55}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "float16", "shape": [2, 128, 512]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.75}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "float32", "shape": [2, 200, 1024]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.3}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [8, 128, 512]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.2}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "float16", "shape": [24, 128, 512]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.4}]}
+{"inputs": [{"name": "inputs", "type": "tensor", "required": true, "dtype": "float32", "shape": [2, 1024, 8192]}, {"name": "target_sparsity", "type": "attr", "required": true, "dtype": "float", "value": 0.35}]}
