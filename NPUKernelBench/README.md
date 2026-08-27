@@ -35,5 +35,7 @@
 
 ## 注意事项
 
+- 算子文件统一命名为 `npukernelbench_level{N}_{id}_{Name}.py` / `.json`,`npukernelbench_` 前缀用于区分后续扩充的其他数据集
 - 新增算子时:jsonl、两个目录的 `{op}.py` / `{op}.json` 需同步补齐;`{op}.py` 中 `get_input_groups()` 的 json 文件名**必须硬编码**为 `{op}.json`,不得使用 `__file__` basename 推导(judge 注入时文件会被重命名为 `model.py`)
 - 修改 `src/` 的 `.py` 后需同步到 `src_simple/`(两目录 .py 内容一致)
+- 精简用例**每算子保持 ≥8 条**:outcome reward 的 correctness 失败档按 `0.3 + 0.1×(passed/total)` 计分,case 数过少会让通过率粒度过粗(如 3 case 时每 case 摆 0.033、档内上限仅 0.367)

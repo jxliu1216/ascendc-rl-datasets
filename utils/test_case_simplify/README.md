@@ -23,7 +23,7 @@ python3 ../../utils/test_case_simplify/simplify_cases.py
 
 1. **格式约定**：用例文件必须是 JSONL（每行一个 JSON 对象），顶层结构为 `{"inputs": [...]}`；输入条目的 `type` 仅支持 `tensor`（`shape` 字段）、`tensor_list`（`shapes` 字段，如 Cat 算子）、`attr`（`value` 字段）三种。遇到未知类型时脚本会在 **stderr 打印 WARNING**，该条目不参与特征提取——此时需在 `tensors_of()` 中补充对应解析。
 2. **不足 10 条的文件**：去重后按**实际数量**保留，不会为了凑数而复制造假。
-3. **纯 attr 算子**：无 tensor 输入的算子（如 `level2_22_HybridAttentionMaskPreparation`）也能正确处理，此时多样性完全由属性组合保证。
+3. **纯 attr 算子**：无 tensor 输入的算子（如 `npukernelbench_level2_22_HybridAttentionMaskPreparation`）也能正确处理，此时多样性完全由属性组合保证。
 4. 脚本只读原始文件、写 `*_simple.json`，**不会修改或删除原文件**。
 
 ## 二、精简原则

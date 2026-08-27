@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """NPUKernelBench → operator_tasks.jsonl 转换脚本。
 
-将 NPUKernelBench/src 目录下的算子参考实现（level{N}_{id}_{name}.py）转换为
+将 NPUKernelBench/src 目录下的算子参考实现（npukernelbench_level{N}_{id}_{name}.py）转换为
 RL 训练数据集（每算子一行）。
 
 用法:
@@ -17,7 +17,7 @@ import re
 import sys
 from pathlib import Path
 
-_OP_FILE = re.compile(r"^level(\d+)_(\d+)_(.+)\.py$")
+_OP_FILE = re.compile(r"^npukernelbench_level(\d+)_(\d+)_(.+)\.py$")
 
 # prompt 模板：{op_name} 为唯一占位符。
 _PROMPT_TEMPLATE = """\
@@ -57,7 +57,7 @@ def build(benchmark_dir: Path, out_path: Path,
                 print(f"[warn] 跳过不符合命名规范的文件: {py.name}", file=sys.stderr)
                 continue
             level, _id, name = m.group(1), m.group(2), m.group(3)
-            op_name = py.stem  # level1_2_SwiGLU：保留 level 前缀，全局唯一
+            op_name = py.stem  # npukernelbench_level1_2_SwiGLU：保留数据集+level 前缀，全局唯一
             if only and op_name not in only:
                 continue
             payload = {
@@ -84,11 +84,11 @@ def build(benchmark_dir: Path, out_path: Path,
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--benchmark-dir", required=True, type=Path,
-                    help="NPUKernelBench 目录（含 level{N}_{id}_{name}.py）")
+                    help="NPUKernelBench 目录（含 npukernelbench_level{N}_{id}_{name}.py）")
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--arch", default="ascend910b1")
     ap.add_argument("--ops", default="",
-                    help="逗号分隔的算子名白名单（如 level1_2_SwiGLU），单算子冒烟用")
+                    help="逗号分隔的算子名白名单（如 npukernelbench_level1_2_SwiGLU），单算子冒烟用")
     args = ap.parse_args()
     only = {o.strip() for o in args.ops.split(",") if o.strip()} or None
     n = build(args.benchmark_dir, args.out, args.arch, only)
