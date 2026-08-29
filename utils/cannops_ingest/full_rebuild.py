@@ -15,7 +15,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(HERE, "..", "..", "cann_ops_tmp")
-OUT_DIR = os.path.join(HERE, "..", "..", "CANN_Ops")
+OUT_DIR = os.path.join(HERE, "..", "..", "CANN_Ops", "src")
+REPORT_DIR = os.path.join(HERE, "..", "..", "CANN_Ops", "report")
 PY = "/root/miniconda3/envs/coding_env/bin/python"
 
 sys.path.insert(0, HERE)
@@ -58,7 +59,7 @@ def run_one(t):
 def main():
     # clean previous outputs
     for fn in os.listdir(OUT_DIR):
-        if fn.startswith("cannops_") or fn in ("_manifest.json", "_ingest_report.md"):
+        if fn.startswith("cannops_"):
             os.remove(os.path.join(OUT_DIR, fn))
     ops = collect_ops()
     print("total ops: %d" % len(ops), flush=True)
@@ -75,7 +76,8 @@ def main():
             print("[%s] %s" % (r["status"], r["op"]), flush=True)
 
     manifest.sort(key=lambda m: (m["level"], m["old_id"]))
-    with open(os.path.join(OUT_DIR, "_manifest.json"), "w") as f:
+    os.makedirs(REPORT_DIR, exist_ok=True)
+    with open(os.path.join(REPORT_DIR, "_manifest.json"), "w") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
     with open("/tmp/verify_partial.jsonl", "w") as f:
         for r in results:

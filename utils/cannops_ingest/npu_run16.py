@@ -15,7 +15,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "..", "..", "CANN_Ops")
+OUT_DIR = os.path.join(HERE, "..", "..", "CANN_Ops", "src")
+REPORT_DIR = os.path.join(HERE, "..", "..", "CANN_Ops", "report")
 PY = "/root/miniconda3/envs/coding_env/bin/python"
 SET_ENV = "source /usr/local/Ascend/ascend-toolkit/set_env.sh"
 N_WORKERS = 16
@@ -93,7 +94,7 @@ def main():
             first = (r["fails"][0] if r["fails"] else "").replace("|", "\\|")[:150]
             lines.append("| %s | %d/%d | %s |" % (r["op"], r["passed"], r["total"], first))
         lines.append("")
-    with open(os.path.join(OUT_DIR, "_npu_report.md"), "w") as f:
+    with open(os.path.join(REPORT_DIR, "_npu_report.md"), "w") as f:
         f.write("\n".join(lines))
     with open("/tmp/npu_results.jsonl", "w") as f:
         for r in results:

@@ -26,8 +26,8 @@ import torch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(HERE, "..", "..", "cann_ops_tmp")
-OUT_DIR = os.path.join(HERE, "..", "..", "CANN_Ops")
-REPORT = os.path.join(OUT_DIR, "_ingest_report.md")
+OUT_DIR = os.path.join(HERE, "..", "..", "CANN_Ops", "src")
+REPORT = os.path.join(HERE, "..", "..", "CANN_Ops", "report", "_ingest_report.md")
 SAMPLES = 3
 STAT_RTOL = 0.25
 STAT_ATOL = 0.15
@@ -362,7 +362,7 @@ def _arg_name(mod, j):
 
 
 def main():
-    manifest = json.load(open(os.path.join(OUT_DIR, "_manifest.json")))
+    manifest = json.load(open(os.path.join(OUT_DIR, "..", "report", "_manifest.json")))
     only = sys.argv[1:] if len(sys.argv) > 1 else None
     results = []
     for m in manifest:
