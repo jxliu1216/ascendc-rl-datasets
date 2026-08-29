@@ -1,0 +1,5 @@
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[48, 1024]]}, {"name": "alpha", "type": "tensor", "required": true, "dtype": "float16", "shape": [1], "data": [1.0]}]}
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[512, 2048]]}, {"name": "alpha", "type": "tensor", "required": true, "dtype": "float32", "shape": [1], "data": [1.0]}]}
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[24, 32, 3]]}, {"name": "alpha", "type": "tensor", "required": true, "dtype": "float16", "shape": [1], "data": [1.0]}]}
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[24, 32, 2, 14]]}, {"name": "alpha", "type": "tensor", "required": true, "dtype": "float32", "shape": [1], "data": [1.0]}]}
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "int32", "shapes": [[24, 32, 2, 5, 7]], "range": [0, 99]}, {"name": "alpha", "type": "tensor", "required": true, "dtype": "int32", "shape": [1], "data": [1]}]}

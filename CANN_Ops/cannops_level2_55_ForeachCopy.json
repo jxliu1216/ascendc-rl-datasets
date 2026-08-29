@@ -1,0 +1,18 @@
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[48, 1024]], "range": [1.0, 10.9921875]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[512, 2048]], "range": [1.0, 10.9921875]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[24, 16, 128, 128]], "range": [1.0, 10.9921875]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[8192], [2048]], "range": [1.0, 10.9921875]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[512, 2048], [1024, 512, 128], [48, 2048]], "range": [1.0, 10.9921875]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[8192], [2048], [512, 2048], [1024, 512, 128], [24, 16, 128, 128], [512, 2048]], "range": [1.0, 10.9921875]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "bfloat16", "shapes": [[48, 1024]], "range": [1.0, 10.9375]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "bfloat16", "shapes": [[512, 2048]], "range": [1.0, 10.9375]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "bfloat16", "shapes": [[24, 16, 128, 128]], "range": [1.0, 10.9375]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "bfloat16", "shapes": [[8192], [2048]], "range": [1.0, 10.9375]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "bfloat16", "shapes": [[512, 2048], [1024, 512, 128], [48, 2048]], "range": [1.0, 10.9375]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "bfloat16", "shapes": [[8192], [2048], [512, 2048], [1024, 512, 128], [24, 16, 128, 128], [512, 2048]], "range": [1.0, 10.9375]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[48, 1024]], "range": [1.0000470876693726, 10.999762535095215]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[512, 2048]], "range": [1.0000029802322388, 10.99998664855957]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[24, 16, 128, 128]], "range": [1.0000059604644775, 10.999999046325684]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[8192], [2048]], "range": [1.0008916854858398, 10.999905586242676]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[512, 2048], [1024, 512, 128], [48, 2048]], "range": [1.0, 10.999999046325684]}]}
+{"inputs": [{"name": "inputs", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[8192], [2048], [512, 2048], [1024, 512, 128], [24, 16, 128, 128], [512, 2048]], "range": [1.0, 10.999999046325684]}]}

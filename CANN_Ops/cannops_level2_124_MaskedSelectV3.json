@@ -1,0 +1,7 @@
+{"inputs": [{"name": "input_tensor", "type": "tensor", "required": true, "dtype": "float16", "shape": [8, 2048]}, {"name": "mask", "type": "tensor", "required": true, "dtype": "bool", "shape": [8, 2048]}]}
+{"inputs": [{"name": "input_tensor", "type": "tensor", "required": true, "dtype": "float16", "shape": [8, 16, 32]}, {"name": "mask", "type": "tensor", "required": true, "dtype": "bool", "shape": [8, 16, 32]}]}
+{"inputs": [{"name": "input_tensor", "type": "tensor", "required": true, "dtype": "float16", "shape": [64, 128]}, {"name": "mask", "type": "tensor", "required": true, "dtype": "bool", "shape": [64, 128]}]}
+{"inputs": [{"name": "input_tensor", "type": "tensor", "required": true, "dtype": "float16", "shape": [1, 32, 64, 64]}, {"name": "mask", "type": "tensor", "required": true, "dtype": "bool", "shape": [1, 32, 64, 64]}]}
+{"inputs": [{"name": "input_tensor", "type": "tensor", "required": true, "dtype": "float16", "shape": [8, 1024]}, {"name": "mask", "type": "tensor", "required": true, "dtype": "bool", "shape": [8, 1024]}]}
+{"inputs": [{"name": "input_tensor", "type": "tensor", "required": true, "dtype": "float16", "shape": [32, 512, 128]}, {"name": "mask", "type": "tensor", "required": true, "dtype": "bool", "shape": [32, 512, 128]}]}
+{"inputs": [{"name": "input_tensor", "type": "tensor", "required": true, "dtype": "float16", "shape": [256, 512]}, {"name": "mask", "type": "tensor", "required": true, "dtype": "bool", "shape": [256, 512]}]}

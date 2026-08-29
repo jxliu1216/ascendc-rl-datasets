@@ -1,0 +1,6 @@
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [32, 32]}, {"name": "threshlod", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [1], "data": [-1.0625]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [16, 256]}, {"name": "threshlod", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [1], "data": [-1.84375]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float32", "shape": [32, 128]}, {"name": "threshlod", "type": "tensor", "required": true, "dtype": "float32", "shape": [1], "data": [2.287518262863159]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float32", "shape": [64, 128, 256]}, {"name": "threshlod", "type": "tensor", "required": true, "dtype": "float32", "shape": [1], "data": [-0.427041620016098]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float16", "shape": [1024, 256]}, {"name": "threshlod", "type": "tensor", "required": true, "dtype": "float16", "shape": [1], "data": [1.673828125]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float16", "shape": [128, 512]}, {"name": "threshlod", "type": "tensor", "required": true, "dtype": "float16", "shape": [1], "data": [0.5849609375]}]}

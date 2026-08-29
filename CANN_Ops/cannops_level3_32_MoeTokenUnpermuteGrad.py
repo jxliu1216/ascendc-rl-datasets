@@ -1,0 +1,103 @@
+import torch
+import torch.nn as nn
+import json
+import os
+
+DTYPE_MAP = {
+    "float16": torch.float16,
+    "float32": torch.float32,
+    "float64": torch.float64,
+    "bfloat16": torch.bfloat16,
+    "int8": torch.int8,
+    "int16": torch.int16,
+    "int32": torch.int32,
+    "int64": torch.int64,
+    "uint8": torch.uint8,
+    "bool": torch.bool,
+    "complex64": torch.complex64,
+}
+
+import torch
+import torch.nn as nn
+from torch import Tensor
+from typing import Optional, List
+
+class Model(nn.Module):
+
+    def __init__(self):
+        super(Model, self).__init__()
+
+    def forward(self, permuted_tokens: Tensor, unpermuted_tokens_grad: Tensor, sorted_indices: Tensor, probs: Optional[Tensor], padded_mode: bool) -> List[Tensor]:
+        if probs is not None:
+            topk = probs.size(1)
+            H = unpermuted_tokens_grad.size(0)
+            D = unpermuted_tokens_grad.size(1)
+            N = sorted_indices.size(0)
+            permuted_tokens_float = permuted_tokens.float()
+            unpermuted_tokens = torch.zeros(N, D, dtype=torch.float32)
+            unpermuted_tokens = permuted_tokens_float.index_select(0, sorted_indices)
+            unpermuted_tokens = unpermuted_tokens.reshape(-1, topk, permuted_tokens.size(-1))
+            probs_grad = torch.sum(unpermuted_tokens_grad.unsqueeze(1) * unpermuted_tokens, -1, keepdim=False)
+            permuted_tokens_grad = (unpermuted_tokens_grad.unsqueeze(1) * probs.unsqueeze(-1)).reshape(-1, D)
+            permuted_tokens_grad1 = torch.zeros(N, D, dtype=torch.float32)
+            permuted_tokens_grad1.index_add_(0, sorted_indices, permuted_tokens_grad.to(torch.float32))
+            return (permuted_tokens_grad1.to(permuted_tokens.dtype), probs_grad.to(probs.dtype))
+        else:
+            topk = 1
+            D = unpermuted_tokens_grad.size(1)
+            N = sorted_indices.size(0)
+            permuted_tokens_float = permuted_tokens.float()
+            unpermuted_tokens = torch.zeros(N, D, dtype=torch.float32)
+            unpermuted_tokens = permuted_tokens_float.index_select(0, sorted_indices)
+            if permuted_tokens.size(-1) == 0:
+                unpermuted_tokens = unpermuted_tokens.reshape(sorted_indices.shape[0] // topk, topk, permuted_tokens.size(-1))
+            else:
+                unpermuted_tokens = unpermuted_tokens.reshape(-1, topk, permuted_tokens.size(-1))
+            permuted_tokens_grad1 = torch.zeros(N, D, dtype=torch.float32)
+            permuted_tokens_grad1.index_copy_(0, sorted_indices.to(torch.int64), unpermuted_tokens_grad.to(torch.float32))
+            return permuted_tokens_grad1.to(permuted_tokens.dtype)
+
+def get_input_groups():
+    json_path = os.path.join(os.path.dirname(__file__), 'cannops_level3_32_MoeTokenUnpermuteGrad.json')
+    with open(json_path, "r") as f:
+        cases = [json.loads(line) for line in f if line.strip()]
+
+    input_groups = []
+    for case in cases:
+        inputs = case["inputs"]
+        permuted_tokens_info = inputs[0]
+        unpermuted_tokens_grad_info = inputs[1]
+        sorted_indices_info = inputs[2]
+        probs_info = inputs[3]
+        padded_mode_info = inputs[4]
+
+        if "data" in permuted_tokens_info:
+            permuted_tokens = torch.tensor(permuted_tokens_info["data"], dtype=DTYPE_MAP[permuted_tokens_info["dtype"]]).reshape(permuted_tokens_info["shape"])
+        else:
+            permuted_tokens = torch.rand(permuted_tokens_info["shape"], dtype=DTYPE_MAP[permuted_tokens_info["dtype"]])
+        if "data" in unpermuted_tokens_grad_info:
+            unpermuted_tokens_grad = torch.tensor(unpermuted_tokens_grad_info["data"], dtype=DTYPE_MAP[unpermuted_tokens_grad_info["dtype"]]).reshape(unpermuted_tokens_grad_info["shape"])
+        else:
+            unpermuted_tokens_grad = torch.rand(unpermuted_tokens_grad_info["shape"], dtype=DTYPE_MAP[unpermuted_tokens_grad_info["dtype"]])
+        if "data" in sorted_indices_info:
+            sorted_indices = torch.tensor(sorted_indices_info["data"], dtype=DTYPE_MAP[sorted_indices_info["dtype"]]).reshape(sorted_indices_info["shape"])
+        else:
+            sorted_indices = torch.randperm(sorted_indices_info["shape"][0], dtype=DTYPE_MAP[sorted_indices_info["dtype"]]) + sorted_indices_info["range"][0]
+        if probs_info["type"] == "attr":
+            if probs_info.get("dtype") == "none":
+                probs = None
+            else:
+                probs = probs_info["value"]
+        else:
+            if "data" in probs_info:
+                probs = torch.tensor(probs_info["data"], dtype=DTYPE_MAP[probs_info["dtype"]]).reshape(probs_info["shape"])
+            else:
+                probs = torch.rand(probs_info["shape"], dtype=DTYPE_MAP[probs_info["dtype"]])
+        padded_mode = padded_mode_info["value"]
+
+        input_groups.append([permuted_tokens, unpermuted_tokens_grad, sorted_indices, probs, padded_mode])
+    return input_groups
+
+
+def get_init_inputs():
+    return []

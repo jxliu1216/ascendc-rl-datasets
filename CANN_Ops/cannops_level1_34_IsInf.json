@@ -1,0 +1,4 @@
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "float16", "shape": [48, 128, 512], "mean": NaN, "std": NaN, "inject": "nan"}]}
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "float16", "shape": [96, 64, 1024], "mean": NaN, "std": NaN, "inject": "nan"}]}
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "float32", "shape": [32, 32, 768], "mean": NaN, "std": NaN, "inject": "nan"}]}
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "float32", "shape": [48, 8192], "mean": NaN, "std": NaN, "inject": "nan"}]}
