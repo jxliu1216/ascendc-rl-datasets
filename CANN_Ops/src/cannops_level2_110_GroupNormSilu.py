@@ -74,7 +74,7 @@ def get_input_groups():
         if "data" in beta_info:
             beta = torch.tensor(beta_info["data"], dtype=DTYPE_MAP[beta_info["dtype"]]).reshape(beta_info["shape"])
         else:
-            beta = torch.rand(beta_info["shape"], dtype=DTYPE_MAP[beta_info["dtype"]])
+            beta = torch.rand(beta_info["shape"], dtype=DTYPE_MAP[beta_info["dtype"]]) * (beta_info["range"][1] - beta_info["range"][0]) + beta_info["range"][0]
 
         input_groups.append([x, gamma, beta])
     return input_groups

@@ -188,11 +188,11 @@ def get_input_groups():
         if "data" in scale_k_info:
             scale_k = torch.tensor(scale_k_info["data"], dtype=DTYPE_MAP[scale_k_info["dtype"]]).reshape(scale_k_info["shape"])
         else:
-            scale_k = torch.rand(scale_k_info["shape"], dtype=DTYPE_MAP[scale_k_info["dtype"]])
+            scale_k = torch.rand(scale_k_info["shape"], dtype=DTYPE_MAP[scale_k_info["dtype"]]) * (scale_k_info["range"][1] - scale_k_info["range"][0]) + scale_k_info["range"][0]
         if "data" in scale_v_info:
             scale_v = torch.tensor(scale_v_info["data"], dtype=DTYPE_MAP[scale_v_info["dtype"]]).reshape(scale_v_info["shape"])
         else:
-            scale_v = torch.rand(scale_v_info["shape"], dtype=DTYPE_MAP[scale_v_info["dtype"]])
+            scale_v = torch.rand(scale_v_info["shape"], dtype=DTYPE_MAP[scale_v_info["dtype"]]) * (scale_v_info["range"][1] - scale_v_info["range"][0]) + scale_v_info["range"][0]
         if offset_k_info["type"] == "attr":
             if offset_k_info.get("dtype") == "none":
                 offset_k = None
@@ -222,7 +222,7 @@ def get_input_groups():
             if "data" in weight_scale_info:
                 weight_scale = torch.tensor(weight_scale_info["data"], dtype=DTYPE_MAP[weight_scale_info["dtype"]]).reshape(weight_scale_info["shape"])
             else:
-                weight_scale = torch.rand(weight_scale_info["shape"], dtype=DTYPE_MAP[weight_scale_info["dtype"]])
+                weight_scale = torch.rand(weight_scale_info["shape"], dtype=DTYPE_MAP[weight_scale_info["dtype"]]) * (weight_scale_info["range"][1] - weight_scale_info["range"][0]) + weight_scale_info["range"][0]
         if activation_scale_info["type"] == "attr":
             if activation_scale_info.get("dtype") == "none":
                 activation_scale = None
@@ -249,30 +249,9 @@ def get_input_groups():
                     bias = torch.rand(bias_info["shape"]) < bias_info.get("true_frac", 0.5)
                 else:
                     bias = torch.randn(bias_info["shape"], dtype=_dt) * bias_info["std"] + bias_info["mean"]
-        if "data" in _q_buf_info:
-            _q_buf = torch.tensor(_q_buf_info["data"], dtype=DTYPE_MAP[_q_buf_info["dtype"]]).reshape(_q_buf_info["shape"])
-        else:
-            _q_buf = torch.randn(_q_buf_info["shape"], dtype=DTYPE_MAP[_q_buf_info["dtype"]]) * _q_buf_info["std"] + _q_buf_info["mean"]
-        if _q_buf_info.get("inject"):
-            _f = _q_buf.reshape(-1)
-            _f[0] = float(_q_buf_info["inject"])
-            _q_buf = _f.reshape(_q_buf.shape)
-        if "data" in _k_buf_info:
-            _k_buf = torch.tensor(_k_buf_info["data"], dtype=DTYPE_MAP[_k_buf_info["dtype"]]).reshape(_k_buf_info["shape"])
-        else:
-            _k_buf = torch.randn(_k_buf_info["shape"], dtype=DTYPE_MAP[_k_buf_info["dtype"]]) * _k_buf_info["std"] + _k_buf_info["mean"]
-        if _k_buf_info.get("inject"):
-            _f = _k_buf.reshape(-1)
-            _f[0] = float(_k_buf_info["inject"])
-            _k_buf = _f.reshape(_k_buf.shape)
-        if "data" in _v_buf_info:
-            _v_buf = torch.tensor(_v_buf_info["data"], dtype=DTYPE_MAP[_v_buf_info["dtype"]]).reshape(_v_buf_info["shape"])
-        else:
-            _v_buf = torch.randn(_v_buf_info["shape"], dtype=DTYPE_MAP[_v_buf_info["dtype"]]) * _v_buf_info["std"] + _v_buf_info["mean"]
-        if _v_buf_info.get("inject"):
-            _f = _v_buf.reshape(-1)
-            _f[0] = float(_v_buf_info["inject"])
-            _v_buf = _f.reshape(_v_buf.shape)
+        _q_buf = torch.empty(_q_buf_info["shape"], dtype=DTYPE_MAP[_q_buf_info["dtype"]])
+        _k_buf = torch.empty(_k_buf_info["shape"], dtype=DTYPE_MAP[_k_buf_info["dtype"]])
+        _v_buf = torch.empty(_v_buf_info["shape"], dtype=DTYPE_MAP[_v_buf_info["dtype"]])
 
         input_groups.append([x, cos, sin, k_cache, v_cache, indices, scale_k, scale_v, offset_k, offset_v, weight_scale, activation_scale, bias, _q_buf, _k_buf, _v_buf])
     return input_groups

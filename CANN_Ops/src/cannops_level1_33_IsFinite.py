@@ -43,10 +43,11 @@ def get_input_groups():
         if "data" in x_info:
             x = torch.tensor(x_info["data"], dtype=DTYPE_MAP[x_info["dtype"]]).reshape(x_info["shape"])
         else:
-            x = torch.randn(x_info["shape"], dtype=DTYPE_MAP[x_info["dtype"]]) * x_info["std"] + x_info["mean"]
+            x = torch.rand(x_info["shape"], dtype=DTYPE_MAP[x_info["dtype"]])
         if x_info.get("inject"):
             _f = x.reshape(-1)
-            _f[0] = float(x_info["inject"])
+            _k = max(1, int(round(x_info.get("inject_frac", 0.0) * _f.numel())))
+            _f[-_k:] = float(x_info["inject"])
             x = _f.reshape(x.shape)
 
         input_groups.append([x])

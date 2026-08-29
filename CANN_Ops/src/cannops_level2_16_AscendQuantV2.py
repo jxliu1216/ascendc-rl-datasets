@@ -101,7 +101,7 @@ def get_input_groups():
         if "data" in scale_info:
             scale = torch.tensor(scale_info["data"], dtype=DTYPE_MAP[scale_info["dtype"]]).reshape(scale_info["shape"])
         else:
-            scale = torch.rand(scale_info["shape"], dtype=DTYPE_MAP[scale_info["dtype"]])
+            scale = torch.rand(scale_info["shape"], dtype=DTYPE_MAP[scale_info["dtype"]]) * (scale_info["range"][1] - scale_info["range"][0]) + scale_info["range"][0]
         if offset_info["type"] == "attr":
             if offset_info.get("dtype") == "none":
                 offset = None

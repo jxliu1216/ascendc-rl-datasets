@@ -44,7 +44,7 @@ def get_input_groups():
         if "data" in input_info:
             input = torch.tensor(input_info["data"], dtype=DTYPE_MAP[input_info["dtype"]]).reshape(input_info["shape"])
         else:
-            input = torch.rand(input_info["shape"], dtype=DTYPE_MAP[input_info["dtype"]]) * (input_info["range"][1] - input_info["range"][0]) + input_info["range"][0]
+            input = torch.abs(torch.randn(input_info["shape"], dtype=DTYPE_MAP[input_info["dtype"]]) * input_info["sigma"])
 
         input_groups.append([input])
     return input_groups

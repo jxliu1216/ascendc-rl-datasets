@@ -57,7 +57,7 @@ def get_input_groups():
         if "data" in log_probs_info:
             log_probs = torch.tensor(log_probs_info["data"], dtype=DTYPE_MAP[log_probs_info["dtype"]]).reshape(log_probs_info["shape"])
         else:
-            log_probs = torch.rand(log_probs_info["shape"], dtype=DTYPE_MAP[log_probs_info["dtype"]]) * (log_probs_info["range"][1] - log_probs_info["range"][0]) + log_probs_info["range"][0]
+            log_probs = torch.nn.functional.log_softmax(torch.randn(log_probs_info["shape"], dtype=DTYPE_MAP[log_probs_info["dtype"]]), -1)
         if "data" in targets_info:
             targets = torch.tensor(targets_info["data"], dtype=DTYPE_MAP[targets_info["dtype"]]).reshape(targets_info["shape"])
         else:

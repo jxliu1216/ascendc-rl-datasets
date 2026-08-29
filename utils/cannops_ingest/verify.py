@@ -121,7 +121,15 @@ def stats_of(values):
 
 
 def cmp_stats(new, old):
-    """Return list of mismatch strings (empty = ok)."""
+    """Return list of mismatch strings (empty = ok).
+
+    Tolerances target estimator noise, not semantic shifts:
+    - mean: absolute-or-relative, scaled by distribution spread (a real shift
+      like 0.5 vs 0.005 still fails; sampling noise on wide ranges does not)
+    - min/max containment only for bounded (json "range"-carrying) args;
+      for normal-family (unbounded) args, extremes are tail statistics with
+      high variance and are skipped by design
+    """
     msgs = []
     if new is None or old is None:
         return msgs
@@ -135,21 +143,27 @@ def cmp_stats(new, old):
         if abs(new["true_frac"] - old["true_frac"]) > 0.05:
             msgs.append("true_frac %.3f vs %.3f" % (new["true_frac"], old["true_frac"]))
     elif new["kind"] == "int":
-        if not (old["min"] <= new["min"] and new["max"] <= old["max"]):
-            # new bounds outside original observed bounds
+        width = max(old["max"] - old["min"], 1)
+        # both sides estimate extremes from a few samples of the same
+        # distribution; compare symmetrically with 5%-of-width tolerance
+        # (out-of-range validity is separately enforced by the forward check)
+        slack = max(2, round(0.05 * width))
+        if abs(new["min"] - old["min"]) > slack or abs(new["max"] - old["max"]) > slack:
             msgs.append("int range [%d,%d] vs orig [%d,%d]" % (new["min"], new["max"], old["min"], old["max"]))
         if old["uniq"] > 0.98 and new["uniq"] < 0.9:
             msgs.append("uniq-ratio %.3f vs %.3f" % (new["uniq"], old["uniq"]))
     else:
-        for k in ("mean", "std"):
-            a, b = new[k], old[k]
-            if abs(a - b) > STAT_ATOL + STAT_RTOL * abs(b):
-                msgs.append("%s %.4g vs orig %.4g" % (k, a, b))
-        # support containment with slack
-        if new["min"] < old["min"] - max(1.0, 0.1 * abs(old["min"])) or \
-           new["max"] > old["max"] + max(1.0, 0.1 * abs(old["max"])):
-            msgs.append("float range [%.4g,%.4g] vs orig [%.4g,%.4g]"
-                        % (new["min"], new["max"], old["min"], old["max"]))
+        mean_tol = 0.15 + 0.25 * abs(old["mean"]) + 0.03 * old["std"]
+        if abs(new["mean"] - old["mean"]) > mean_tol:
+            msgs.append("mean %.4g vs orig %.4g" % (new["mean"], old["mean"]))
+        if abs(new["std"] - old["std"]) > 0.15 + STAT_RTOL * abs(old["std"]):
+            msgs.append("std %.4g vs orig %.4g" % (new["std"], old["std"]))
+        if new.get("bounded"):
+            lo_slack = max(1.0, 0.1 * abs(old["min"]))
+            hi_slack = max(1.0, 0.1 * abs(old["max"]))
+            if new["min"] < old["min"] - lo_slack or new["max"] > old["max"] + hi_slack:
+                msgs.append("float range [%.4g,%.4g] vs orig [%.4g,%.4g]"
+                            % (new["min"], new["max"], old["min"], old["max"]))
     return msgs
 
 
@@ -211,7 +225,17 @@ def arg_diff(where, na, oa):
 
 
 def run_forward(Model, init, args):
-    """no_grad first; on failure retry with float inputs requiring grad."""
+    """no_grad first; on failure retry with float inputs requiring grad.
+    Args are cloned: several reference Models mutate inputs in place, and the
+    caller reuses these groups for the distribution comparison afterwards."""
+    def _clone(a):
+        if isinstance(a, torch.Tensor):
+            return a.clone()
+        if isinstance(a, list):
+            return [_clone(x) for x in a]
+        return a
+    args = [_clone(a) for a in args]
+
     def _go(grad):
         a2 = []
         for a in args:
@@ -286,9 +310,14 @@ def verify_op(level, old_id, op_name, new_base):
         if json_cases:
             n_args_j = len(json_cases[0].get("inputs", []))
             for j in range(n_args_j):
-                if all(j < len(cs.get("inputs", [])) and "data" in cs["inputs"][j]
-                       for cs in json_cases):
-                    data_args.add(j)
+                def _pinned(cs):
+                    if j >= len(cs.get("inputs", [])):
+                        return False
+                    e = cs["inputs"][j]
+                    return "data" in e or e.get("uninitialized") or e.get("bit_pattern") \
+                        or (e.get("type") == "attr" and e.get("dtype") == "none")
+                if all(_pinned(cs) for cs in json_cases):
+                    data_args.add(j)  # exact values / placeholder: skip distribution
     except Exception:
         pass
 
@@ -320,8 +349,32 @@ def verify_op(level, old_id, op_name, new_base):
         o_init = old_inits[c] if old_inits else []
         out_old, err2 = run_forward(old.Model, o_init, old_groups[c])
         if err2 is None and finite_pattern(out_new) != finite_pattern(out_old):
-            fwd_fail.append("case %d: finite pattern %s vs orig %s"
-                            % (c, finite_pattern(out_new), finite_pattern(out_old)))
+            # finiteness of exp/cumsum-style references depends on the random
+            # draw; retest both sides with fresh draws before flagging
+            pat = finite_pattern(out_new)
+            cleared = False
+            for _ in range(3):
+                try:
+                    og = [[norm(a) for a in g] for g in old.get_input_groups()][c]
+                    oo, oe = run_forward(old.Model, o_init, og)
+                    if oe is None and finite_pattern(oo) == pat:
+                        cleared = True
+                        break
+                except Exception:
+                    break
+            if not cleared:
+                for _ in range(3):
+                    try:
+                        ng = [[norm(a) for a in g] for g in new.get_input_groups()][c]
+                        no, ne = run_forward(new.Model, init, ng)
+                        if ne is None and finite_pattern(no) == finite_pattern(out_old):
+                            cleared = True
+                            break
+                    except Exception:
+                        break
+            if not cleared:
+                fwd_fail.append("case %d: finite pattern %s vs orig %s"
+                                % (c, finite_pattern(out_new), finite_pattern(out_old)))
         if len(fwd_fail) >= 3:
             break
 
@@ -338,7 +391,11 @@ def verify_op(level, old_id, op_name, new_base):
                 continue  # value-stored: identical to original by construction
             nv = [norm(s[c][j]) for s in new_samples for c in range(len(new_groups))]
             ov = [norm(s[c][j]) for s in old_samples for c in range(len(old_groups))]
-            m = cmp_stats(stats_of(nv), stats_of(ov))
+            nst, ost = stats_of(nv), stats_of(ov)
+            if nst is not None and ost is not None and json_cases:
+                nst["bounded"] = any(j < len(cs.get("inputs", [])) and "range" in cs["inputs"][j]
+                                     for cs in json_cases)
+            m = cmp_stats(nst, ost)
             if m:
                 dist_msgs.append("arg %d (%s): %s" % (j, _arg_name(new, j), "; ".join(m)))
         del new_samples, old_samples

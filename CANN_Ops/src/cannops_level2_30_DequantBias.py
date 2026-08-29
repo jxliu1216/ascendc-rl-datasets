@@ -89,7 +89,7 @@ def get_input_groups():
         if "data" in weight_scale_info:
             weight_scale = torch.tensor(weight_scale_info["data"], dtype=DTYPE_MAP[weight_scale_info["dtype"]]).reshape(weight_scale_info["shape"])
         else:
-            weight_scale = torch.rand(weight_scale_info["shape"], dtype=DTYPE_MAP[weight_scale_info["dtype"]])
+            weight_scale = torch.rand(weight_scale_info["shape"], dtype=DTYPE_MAP[weight_scale_info["dtype"]]) * (weight_scale_info["range"][1] - weight_scale_info["range"][0]) + weight_scale_info["range"][0]
         if activate_scale_info["type"] == "attr":
             if activate_scale_info.get("dtype") == "none":
                 activate_scale = None

@@ -90,7 +90,7 @@ def get_input_groups():
             if _dt in (torch.int8, torch.int16, torch.int32, torch.int64, torch.uint8):
                 x_tensor = torch.randint(x_tensor_info["range"][0], x_tensor_info["range"][1] + 1, tuple(x_tensor_info["shape"]), dtype=_dt)
             elif _dt == torch.bool:
-                x_tensor = torch.rand(x_tensor_info["shape"]) > 0.5
+                x_tensor = torch.rand(x_tensor_info["shape"]) < x_tensor_info.get("true_frac", 0.5)
             else:
                 x_tensor = torch.rand(x_tensor_info["shape"], dtype=_dt)
         if weight_scale_info["type"] == "attr":

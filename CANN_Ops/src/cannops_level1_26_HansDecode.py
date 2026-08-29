@@ -70,16 +70,16 @@ def get_input_groups():
             mantissa = torch.randn(mantissa_info["shape"], dtype=DTYPE_MAP[mantissa_info["dtype"]]) * mantissa_info["std"] + mantissa_info["mean"]
         if mantissa_info.get("inject"):
             _f = mantissa.reshape(-1)
-            _f[0] = float(mantissa_info["inject"])
+            _k = max(1, int(round(mantissa_info.get("inject_frac", 0.0) * _f.numel())))
+            _f[-_k:] = float(mantissa_info["inject"])
             mantissa = _f.reshape(mantissa.shape)
         if "data" in fixed_info:
             fixed = torch.tensor(fixed_info["data"], dtype=DTYPE_MAP[fixed_info["dtype"]]).reshape(fixed_info["shape"])
         else:
-            fixed = torch.randn(fixed_info["shape"], dtype=DTYPE_MAP[fixed_info["dtype"]]) * fixed_info["std"] + fixed_info["mean"]
-        if fixed_info.get("inject"):
-            _f = fixed.reshape(-1)
-            _f[0] = float(fixed_info["inject"])
-            fixed = _f.reshape(fixed.shape)
+            fixed_n = 1
+            for _s in fixed_info["shape"]: fixed_n *= _s
+            fixed_b = torch.randint(0, 256, (fixed_n * DTYPE_MAP[fixed_info["dtype"]].itemsize,), dtype=torch.uint8)
+            fixed = fixed_b.view(DTYPE_MAP[fixed_info["dtype"]]).reshape(fixed_info["shape"])
         if "data" in var_info:
             var = torch.tensor(var_info["data"], dtype=DTYPE_MAP[var_info["dtype"]]).reshape(var_info["shape"])
         else:

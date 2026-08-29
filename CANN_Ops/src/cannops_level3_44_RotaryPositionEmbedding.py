@@ -96,14 +96,7 @@ def get_input_groups():
             sin = torch.tensor(sin_info["data"], dtype=DTYPE_MAP[sin_info["dtype"]]).reshape(sin_info["shape"])
         else:
             sin = torch.rand(sin_info["shape"], dtype=DTYPE_MAP[sin_info["dtype"]]) * (sin_info["range"][1] - sin_info["range"][0]) + sin_info["range"][0]
-        if "data" in _out_info:
-            _out = torch.tensor(_out_info["data"], dtype=DTYPE_MAP[_out_info["dtype"]]).reshape(_out_info["shape"])
-        else:
-            _out = torch.randn(_out_info["shape"], dtype=DTYPE_MAP[_out_info["dtype"]]) * _out_info["std"] + _out_info["mean"]
-        if _out_info.get("inject"):
-            _f = _out.reshape(-1)
-            _f[0] = float(_out_info["inject"])
-            _out = _f.reshape(_out.shape)
+        _out = torch.empty(_out_info["shape"], dtype=DTYPE_MAP[_out_info["dtype"]])
 
         input_groups.append([x, cos, sin, _out])
     return input_groups
