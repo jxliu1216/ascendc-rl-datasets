@@ -36,7 +36,7 @@ def load_state():
 
 def main():
     out_dir = verify_incr.verify.OUT_DIR
-    manifest = json.load(open(os.path.join(out_dir, "_manifest.json")))
+    manifest = json.load(open(os.path.join(out_dir, "..", "report", "_manifest.json")))
     results = load_state()
 
     # new_id per (level, old_id, op): sorted order within level

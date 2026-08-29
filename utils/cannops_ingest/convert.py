@@ -27,7 +27,8 @@ import sys
 import torch
 
 SRC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "cann_ops_tmp")
-OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "CANN_Ops")
+OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "CANN_Ops", "src")
+REPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "CANN_Ops", "report")
 SAMPLES = 3  # generator samples per op for recipe classification
 
 FLOAT_DTYPES = {torch.float16, torch.float32, torch.float64, torch.bfloat16}
@@ -949,6 +950,7 @@ def convert_op(level, old_id, op_name, src_py, new_id):
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
+    os.makedirs(REPORT_DIR, exist_ok=True)
     manifest = []
     for level in ("level1", "level2", "level3"):
         lvl_dir = os.path.join(SRC_DIR, level)
@@ -968,7 +970,7 @@ def main():
                 manifest.append({"level": level, "old_id": old_id, "op": op_name,
                                  "status": "fail", "error": repr(e)})
                 print("[FAIL] %s/%d_%s: %r" % (level, old_id, op_name, e), flush=True)
-    with open(os.path.join(OUT_DIR, "_manifest.json"), "w") as f:
+    with open(os.path.join(REPORT_DIR, "_manifest.json"), "w") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
     n_ok = sum(1 for m in manifest if m["status"] == "ok")
     print("converted %d/%d" % (n_ok, len(manifest)))

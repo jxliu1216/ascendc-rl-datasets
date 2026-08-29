@@ -16,7 +16,7 @@ import verify
 
 LOG = "/tmp/convert_full.log"
 PARTIAL = "/tmp/verify_partial.jsonl"
-REPORT = os.path.join(verify.OUT_DIR, "_ingest_report.md")
+REPORT = os.path.join(verify.OUT_DIR, "..", "report", "_ingest_report.md")
 
 OK_RE = re.compile(r"\[ok\] (level\d)/(\d+)_(\S+) -> (\S+)")
 FAIL_RE = re.compile(r"\[FAIL\] (level\d)/(\d+)_(\S+): (.*)")

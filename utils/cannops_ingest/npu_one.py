@@ -12,7 +12,7 @@ import os
 import sys
 import traceback
 
-OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "CANN_Ops")
+OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "CANN_Ops", "src")
 
 
 def to_npu(a):

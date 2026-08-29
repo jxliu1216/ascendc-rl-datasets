@@ -1,4 +1,4 @@
-# CANN_Ops 入库验证报告 (main 稳定子集 280 口径)
+# CANN_Ops 入库验证报告 (CPU 侧, main 稳定子集 280 口径)
 
 验证内容: 与 cann_ops_tmp 原版结构等价(case数/参数/dtype/shape/attr) + CPU 前向全用例(含梯度路径) + 生成分布比对。
 AbsMath 已按 drop_cases 删除 3 条 complex64 用例后验证。REVIEW 为分布近似提示(结构与正确性均通过)。
