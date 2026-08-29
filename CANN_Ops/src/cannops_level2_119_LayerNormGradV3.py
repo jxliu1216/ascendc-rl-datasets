@@ -103,11 +103,14 @@ def get_input_groups():
         if "data" in mean_info:
             mean = torch.tensor(mean_info["data"], dtype=DTYPE_MAP[mean_info["dtype"]]).reshape(mean_info["shape"])
         else:
-            mean = torch.rand(mean_info["shape"], dtype=DTYPE_MAP[mean_info["dtype"]])
+            mean_ms = mean_info["shape"]
+            mean_red = tuple(_i for _i in range(len(x.shape)) if mean_ms[_i] == 1 and x.shape[_i] != 1)
+            mean = x.mean(dim=mean_red, keepdim=True)
         if "data" in rstd_info:
             rstd = torch.tensor(rstd_info["data"], dtype=DTYPE_MAP[rstd_info["dtype"]]).reshape(rstd_info["shape"])
         else:
-            rstd = torch.rand(rstd_info["shape"], dtype=DTYPE_MAP[rstd_info["dtype"]]) * (rstd_info["range"][1] - rstd_info["range"][0]) + rstd_info["range"][0]
+            rstd_red = tuple(_i for _i in range(len(x.shape)) if rstd_info["shape"][_i] == 1 and x.shape[_i] != 1)
+            rstd = torch.rsqrt((x - mean).pow(2).mean(dim=rstd_red, keepdim=True) + 1e-05)
         if "data" in weight_info:
             weight = torch.tensor(weight_info["data"], dtype=DTYPE_MAP[weight_info["dtype"]]).reshape(weight_info["shape"])
         else:

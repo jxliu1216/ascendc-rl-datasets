@@ -106,30 +106,9 @@ def get_input_groups():
             x = torch.tensor(x_info["data"], dtype=DTYPE_MAP[x_info["dtype"]]).reshape(x_info["shape"])
         else:
             x = torch.rand(x_info["shape"], dtype=DTYPE_MAP[x_info["dtype"]]) * (x_info["range"][1] - x_info["range"][0]) + x_info["range"][0]
-        if "data" in _dx_info:
-            _dx = torch.tensor(_dx_info["data"], dtype=DTYPE_MAP[_dx_info["dtype"]]).reshape(_dx_info["shape"])
-        else:
-            _dx = torch.randn(_dx_info["shape"], dtype=DTYPE_MAP[_dx_info["dtype"]]) * _dx_info["std"] + _dx_info["mean"]
-        if _dx_info.get("inject"):
-            _f = _dx.reshape(-1)
-            _f[0] = float(_dx_info["inject"])
-            _dx = _f.reshape(_dx.shape)
-        if "data" in _dcos_info:
-            _dcos = torch.tensor(_dcos_info["data"], dtype=DTYPE_MAP[_dcos_info["dtype"]]).reshape(_dcos_info["shape"])
-        else:
-            _dcos = torch.randn(_dcos_info["shape"], dtype=DTYPE_MAP[_dcos_info["dtype"]]) * _dcos_info["std"] + _dcos_info["mean"]
-        if _dcos_info.get("inject"):
-            _f = _dcos.reshape(-1)
-            _f[0] = float(_dcos_info["inject"])
-            _dcos = _f.reshape(_dcos.shape)
-        if "data" in _dsin_info:
-            _dsin = torch.tensor(_dsin_info["data"], dtype=DTYPE_MAP[_dsin_info["dtype"]]).reshape(_dsin_info["shape"])
-        else:
-            _dsin = torch.randn(_dsin_info["shape"], dtype=DTYPE_MAP[_dsin_info["dtype"]]) * _dsin_info["std"] + _dsin_info["mean"]
-        if _dsin_info.get("inject"):
-            _f = _dsin.reshape(-1)
-            _f[0] = float(_dsin_info["inject"])
-            _dsin = _f.reshape(_dsin.shape)
+        _dx = torch.empty(_dx_info["shape"], dtype=DTYPE_MAP[_dx_info["dtype"]])
+        _dcos = torch.empty(_dcos_info["shape"], dtype=DTYPE_MAP[_dcos_info["dtype"]])
+        _dsin = torch.empty(_dsin_info["shape"], dtype=DTYPE_MAP[_dsin_info["dtype"]])
 
         input_groups.append([dy, cos, sin, x, _dx, _dcos, _dsin])
     return input_groups

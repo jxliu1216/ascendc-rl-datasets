@@ -44,7 +44,7 @@ def get_input_groups():
         if "data" in x1_info:
             x1 = torch.tensor(x1_info["data"], dtype=DTYPE_MAP[x1_info["dtype"]]).reshape(x1_info["shape"])
         else:
-            x1 = torch.rand(x1_info["shape"], dtype=DTYPE_MAP[x1_info["dtype"]]) * (x1_info["range"][1] - x1_info["range"][0]) + x1_info["range"][0]
+            x1 = torch.abs(torch.randn(x1_info["shape"], dtype=DTYPE_MAP[x1_info["dtype"]]) * x1_info["sigma"])
         if "data" in x2_info:
             x2 = torch.tensor(x2_info["data"], dtype=DTYPE_MAP[x2_info["dtype"]]).reshape(x2_info["shape"])
         else:

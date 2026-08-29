@@ -57,8 +57,8 @@ def get_input_groups():
         if "data" in x_info:
             x = torch.tensor(x_info["data"], dtype=DTYPE_MAP[x_info["dtype"]]).reshape(x_info["shape"])
         else:
-            x_re = torch.randn(x_info["shape"], dtype=torch.float32)
-            x_im = torch.randn(x_info["shape"], dtype=torch.float32)
+            x_re = torch.rand(x_info["shape"], dtype=torch.float32) * (x_info["range"][1] - x_info["range"][0]) + x_info["range"][0]
+            x_im = torch.rand(x_info["shape"], dtype=torch.float32) * (x_info["range"][1] - x_info["range"][0]) + x_info["range"][0]
             x = torch.complex(x_re, x_im).to(DTYPE_MAP[x_info["dtype"]])
 
         input_groups.append([x])

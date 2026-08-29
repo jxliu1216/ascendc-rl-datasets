@@ -39,15 +39,20 @@ def main():
     manifest = json.load(open(os.path.join(out_dir, "..", "report", "_manifest.json")))
     results = load_state()
 
-    # new_id per (level, old_id, op): sorted order within level
+    # new_id: take from the manifest's own "new" field (main-subset manifests
+    # have gaps after op removal, so re-enumeration would shift ids)
+    new_ids = {}
+    for m in manifest:
+        if m.get("new"):
+            new_ids[(m["level"], m["old_id"], m["op"])] = int(m["new"].split("_")[2])
+    # fallback for entries never converted (status fail): order within level
     by_level = {}
     for m in manifest:
         by_level.setdefault(m["level"], []).append(m)
-    new_ids = {}
     for level, ops in by_level.items():
         ops.sort(key=lambda x: x["old_id"])
         for i, m in enumerate(ops):
-            new_ids[(m["level"], m["old_id"], m["op"])] = i
+            new_ids.setdefault((m["level"], m["old_id"], m["op"]), i)
 
     only = set(sys.argv[1:])
     targets = []

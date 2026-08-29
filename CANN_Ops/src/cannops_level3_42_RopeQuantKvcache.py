@@ -121,7 +121,7 @@ def get_input_groups():
         if "data" in quant_scale_info:
             quant_scale = torch.tensor(quant_scale_info["data"], dtype=DTYPE_MAP[quant_scale_info["dtype"]]).reshape(quant_scale_info["shape"])
         else:
-            quant_scale = torch.rand(quant_scale_info["shape"], dtype=DTYPE_MAP[quant_scale_info["dtype"]])
+            quant_scale = torch.rand(quant_scale_info["shape"], dtype=DTYPE_MAP[quant_scale_info["dtype"]]) * (quant_scale_info["range"][1] - quant_scale_info["range"][0]) + quant_scale_info["range"][0]
         if "data" in quant_offset_info:
             quant_offset = torch.tensor(quant_offset_info["data"], dtype=DTYPE_MAP[quant_offset_info["dtype"]]).reshape(quant_offset_info["shape"])
         else:
@@ -138,30 +138,9 @@ def get_input_groups():
             indices = torch.tensor(indices_info["data"], dtype=DTYPE_MAP[indices_info["dtype"]]).reshape(indices_info["shape"])
         else:
             indices = torch.randint(indices_info["range"][0], indices_info["range"][1] + 1, tuple(indices_info["shape"]), dtype=DTYPE_MAP[indices_info["dtype"]])
-        if "data" in _q_buf_info:
-            _q_buf = torch.tensor(_q_buf_info["data"], dtype=DTYPE_MAP[_q_buf_info["dtype"]]).reshape(_q_buf_info["shape"])
-        else:
-            _q_buf = torch.randn(_q_buf_info["shape"], dtype=DTYPE_MAP[_q_buf_info["dtype"]]) * _q_buf_info["std"] + _q_buf_info["mean"]
-        if _q_buf_info.get("inject"):
-            _f = _q_buf.reshape(-1)
-            _f[0] = float(_q_buf_info["inject"])
-            _q_buf = _f.reshape(_q_buf.shape)
-        if "data" in _k_buf_info:
-            _k_buf = torch.tensor(_k_buf_info["data"], dtype=DTYPE_MAP[_k_buf_info["dtype"]]).reshape(_k_buf_info["shape"])
-        else:
-            _k_buf = torch.randn(_k_buf_info["shape"], dtype=DTYPE_MAP[_k_buf_info["dtype"]]) * _k_buf_info["std"] + _k_buf_info["mean"]
-        if _k_buf_info.get("inject"):
-            _f = _k_buf.reshape(-1)
-            _f[0] = float(_k_buf_info["inject"])
-            _k_buf = _f.reshape(_k_buf.shape)
-        if "data" in _v_buf_info:
-            _v_buf = torch.tensor(_v_buf_info["data"], dtype=DTYPE_MAP[_v_buf_info["dtype"]]).reshape(_v_buf_info["shape"])
-        else:
-            _v_buf = torch.randn(_v_buf_info["shape"], dtype=DTYPE_MAP[_v_buf_info["dtype"]]) * _v_buf_info["std"] + _v_buf_info["mean"]
-        if _v_buf_info.get("inject"):
-            _f = _v_buf.reshape(-1)
-            _f[0] = float(_v_buf_info["inject"])
-            _v_buf = _f.reshape(_v_buf.shape)
+        _q_buf = torch.empty(_q_buf_info["shape"], dtype=DTYPE_MAP[_q_buf_info["dtype"]])
+        _k_buf = torch.empty(_k_buf_info["shape"], dtype=DTYPE_MAP[_k_buf_info["dtype"]])
+        _v_buf = torch.empty(_v_buf_info["shape"], dtype=DTYPE_MAP[_v_buf_info["dtype"]])
 
         input_groups.append([qkv, cos, sin, quant_scale, quant_offset, k_cache, v_cache, indices, _q_buf, _k_buf, _v_buf])
     return input_groups

@@ -104,11 +104,11 @@ def get_input_groups():
         if "data" in mean_info:
             mean = torch.tensor(mean_info["data"], dtype=DTYPE_MAP[mean_info["dtype"]]).reshape(mean_info["shape"])
         else:
-            mean = torch.rand(mean_info["shape"], dtype=DTYPE_MAP[mean_info["dtype"]])
+            mean = torch.rand(mean_info["shape"], dtype=DTYPE_MAP[mean_info["dtype"]]) * (mean_info["range"][1] - mean_info["range"][0]) + mean_info["range"][0]
         if "data" in rstd_info:
             rstd = torch.tensor(rstd_info["data"], dtype=DTYPE_MAP[rstd_info["dtype"]]).reshape(rstd_info["shape"])
         else:
-            rstd = torch.rand(rstd_info["shape"], dtype=DTYPE_MAP[rstd_info["dtype"]])
+            rstd = torch.rand(rstd_info["shape"], dtype=DTYPE_MAP[rstd_info["dtype"]]) * (rstd_info["range"][1] - rstd_info["range"][0]) + rstd_info["range"][0]
         if "data" in x_info:
             x = torch.tensor(x_info["data"], dtype=DTYPE_MAP[x_info["dtype"]]).reshape(x_info["shape"])
         else:
@@ -116,7 +116,7 @@ def get_input_groups():
         if "data" in gamma_info:
             gamma = torch.tensor(gamma_info["data"], dtype=DTYPE_MAP[gamma_info["dtype"]]).reshape(gamma_info["shape"])
         else:
-            gamma = torch.rand(gamma_info["shape"], dtype=DTYPE_MAP[gamma_info["dtype"]])
+            gamma = torch.rand(gamma_info["shape"], dtype=DTYPE_MAP[gamma_info["dtype"]]) * (gamma_info["range"][1] - gamma_info["range"][0]) + gamma_info["range"][0]
         dx_is_require = dx_is_require_info["value"]
         dgamma_is_require = dgamma_is_require_info["value"]
         dbeta_is_require = dbeta_is_require_info["value"]

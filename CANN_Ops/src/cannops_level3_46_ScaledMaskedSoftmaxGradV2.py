@@ -59,7 +59,7 @@ def get_input_groups():
         if "data" in y_info:
             y = torch.tensor(y_info["data"], dtype=DTYPE_MAP[y_info["dtype"]]).reshape(y_info["shape"])
         else:
-            y = torch.rand(y_info["shape"], dtype=DTYPE_MAP[y_info["dtype"]])
+            y = torch.rand(y_info["shape"], dtype=DTYPE_MAP[y_info["dtype"]]) * (y_info["range"][1] - y_info["range"][0]) + y_info["range"][0]
         if "data" in mask_info:
             mask = torch.tensor(mask_info["data"], dtype=DTYPE_MAP[mask_info["dtype"]]).reshape(mask_info["shape"])
         else:

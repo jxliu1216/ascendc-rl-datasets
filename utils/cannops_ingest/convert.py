@@ -146,6 +146,7 @@ class Recipe:
 
 def _float_stats(tensors):
     vals = torch.cat([t.reshape(-1).to(torch.float64) for t in tensors])
+    vals = vals[torch.isfinite(vals)]  # injected inf/nan must not poison moments
     if vals.numel() == 0:
         return dict(min=0.0, max=0.0, mean=0.0, std=1.0, integer_valued=False)
     return dict(
@@ -177,14 +178,23 @@ def _classify_float(name, tensors, per_case_tensors=None):
         per_case = [_ratio(ts)[1] for ts in per_case_tensors]
         # per-case tests, then majority / median
         frac_rand01 = sum(1 for s in per_case
-                          if s["min"] >= -1e-5 and s["max"] <= 1.0 + 1e-5
+                          if -1e-5 <= s["min"] <= 0.1 and 0.9 <= s["max"] <= 1.0 + 1e-5
                           and not s["integer_valued"]) / len(per_case)
         frac_pos = sum(1 for s in per_case if s["min"] >= -1e-5) / len(per_case)
+        # folded normal |N(0,sigma)|: positive, not uniform, long upper tail
+        frac_folded = sum(1 for s in per_case
+                          if s["min"] >= -1e-5
+                          and s["max"] > s["mean"] + 2.5 * s["std"]
+                          and s["mean"] > 0.3 * s["std"]
+                          and s["std"] / max(s["max"] - s["min"], 1e-9) < 0.22
+                          ) / len(per_case)
         frac_std_norm = sum(1 for s in per_case
                             if abs(s["mean"]) < 0.15 and abs(s["std"] - 1.0) < 0.15
                             ) / len(per_case)
         if frac_rand01 > 0.5:
             r.kind = "rand"
+        elif frac_folded > 0.5:
+            r.kind = "abs_randn"
         elif frac_pos > 0.5:
             r.kind = "rand_range"
         elif ratio > 0.22:
@@ -197,8 +207,12 @@ def _classify_float(name, tensors, per_case_tensors=None):
             r.mean, r.std = st["mean"], max(st["std"], 1e-3)
         return r
 
-    if st["min"] >= -1e-5 and st["max"] <= 1.0 + 1e-5 and not st["integer_valued"]:
+    if -1e-5 <= st["min"] <= 0.1 and 0.9 <= st["max"] <= 1.0 + 1e-5 and not st["integer_valued"]:
         r.kind = "rand"
+    elif (st["min"] >= -1e-5 and st["max"] > st["mean"] + 2.5 * st["std"]
+          and st["mean"] > 0.3 * st["std"]
+          and st["std"] / max(st["max"] - st["min"], 1e-9) < 0.22):
+        r.kind = "abs_randn"
     elif st["min"] >= -1e-5:
         r.kind = "rand_range"
     else:
@@ -426,18 +440,36 @@ OP_OVERRIDES = {
     "AbsMath": {"drop_cases": [15, 16, 17]},
     "RoiAlignRotated": {"force_value_args": ["rois"]},
     "RoiAlignRotatedGrad": {"force_value_args": ["rois"]},
+    # group_index = diffs of sorted order statistics (heavy-tailed, range
+    # estimates unstable across samples); pin exact original values
+    "DequantSwigluQuant": {"force_value_args": ["group_index"]},
     # CPU aten._ctc_loss lacks bf16/fp16 kernels (original ran on NPU);
     # upcast to fp32 for the aten call, post-processing casts back
     "CTCLossV3": {"model_patch": [
-        ("._ctc_loss(log_probs, targets,", "._ctc_loss(log_probs.float(), targets,")]},
+        ("._ctc_loss(log_probs, targets,", "._ctc_loss(log_probs.float(), targets,")],
+                  "recipe_overrides": {"log_probs": "log_softmax"}},
     "CTCLossV3Grad": {"model_patch": [
         ("_ctc_loss_backward(grad, log_probs,", "_ctc_loss_backward(grad.float(), log_probs.float(),"),
         ("neg_log_likelihood, log_aplha, blank", "neg_log_likelihood.float(), log_aplha.float(), blank"),
-        ("return res.cpu()", "return res.to(grad.dtype)")]},
+        ("return res.cpu()", "return res.to(grad.dtype)")],
+                      "recipe_overrides": {"log_probs": "log_softmax"}},
+    # 'fixed' holds bit-packed floats reinterpreted from random bytes
+    "HansDecode": {"recipe_overrides": {"fixed": "bit_pattern"}},
+    # mean/rstd are derived from x via native_layer_norm (eps always 1e-5,
+    # normalized_shape always the trailing dims where mean's shape is 1)
+    "LayerNormGradV3": {"recipe_overrides": {"mean": "ln_stats_mean",
+                                             "rstd": "ln_stats_rstd"}},
     # sparse COO input is rebuilt from the indices/values args
     "CoalesceSparse": {"sparse_from": {"indices": "indices", "values": "values"}},
     # original replaces exact zeros with 1 (reciprocal domain)
     "ForeachReciprocal": {"nonzero_fix_args": ["inputs"]},
+    # output placeholder buffers created via torch.empty (uninitialized by
+    # design): generate with torch.empty and skip distribution comparison
+    "InterleaveRope": {"empty_args": ["_out"]},
+    "RotaryPositionEmbedding": {"empty_args": ["_out"]},
+    "RotaryPositionEmbeddingGrad": {"empty_args": ["_dx", "_dcos", "_dsin"]},
+    "RopeQuantKvcache": {"empty_args": ["_q_buf", "_k_buf", "_v_buf"]},
+    "DequantRopeQuantKvcache": {"empty_args": ["_q_buf", "_k_buf", "_v_buf"]},
 }
 
 
@@ -457,6 +489,10 @@ def serialize_entry(recipe, case_values, requires_grad):
     if recipe.kind == "sparse":
         return {"name": recipe.name, "type": "sparse_tensor", "required": True,
                 "dtype": DTYPE_NAME[v0.dtype], "shape": list(v0.shape)}
+    if recipe.kind == "empty":
+        return {"name": recipe.name, "type": "tensor", "required": True,
+                "dtype": DTYPE_NAME[v0.dtype], "shape": list(v0.shape),
+                "uninitialized": True}
     if recipe.kind == "attr":
         entry = {"name": recipe.name, "type": "attr",
                  "required": True, "dtype": recipe.dtype, "value": _json_scalar(v0)}
@@ -545,14 +581,39 @@ def serialize_entry(recipe, case_values, requires_grad):
         st = _float_stats(case_values)
         entry["range"] = [st["min"], st["max"]]
     if recipe.kind == "randn_scaled":
-        entry["mean"], entry["std"] = recipe.mean, recipe.std
+        st2 = _float_stats(case_values)  # per-case moments (cases may differ in scale)
+        entry["mean"], entry["std"] = st2["mean"], max(st2["std"], 1e-3)
+    if recipe.kind == "abs_randn":
+        st2 = _float_stats(case_values)
+        # folded normal std = sigma * sqrt(1 - 2/pi)
+        entry["sigma"] = max(st2["std"] / 0.6028, 1e-3)
+    if recipe.kind == "bit_pattern":
+        entry["bit_pattern"] = True
+    if recipe.kind == "complex":
+        parts = []
+        for v in case_values:
+            if isinstance(v, torch.Tensor):
+                parts += [v.real, v.imag]
+        stc = _float_stats(parts)
+        sub0 = recipe.sub[0]
+        if sub0.kind == "rand_range":
+            entry["range"] = [stc["min"], stc["max"]]
+        elif sub0.kind == "randn_scaled":
+            entry["mean"], entry["std"] = stc["mean"], max(stc["std"], 1e-3)
+        elif sub0.kind == "const":
+            entry["fill"] = _json_scalar(sub0.const)
     if recipe.kind == "bool_full":
         entry["value"] = recipe.bool_value
     if recipe.kind == "bool_rand":
         entry["true_frac"] = recipe.true_frac
     nf = _nonfinite_kind(case_values)
-    if nf:
+    if nf and recipe.kind != "bit_pattern":
         entry["inject"] = nf
+        for v in case_values:
+            if isinstance(v, torch.Tensor) and not v.is_sparse \
+                    and not bool(torch.isfinite(v).all()):
+                entry["inject_frac"] = float((~torch.isfinite(v)).to(torch.float64).mean())
+                break
         recipe.inject_seen = True
     if requires_grad:
         entry["requires_grad"] = True
@@ -591,6 +652,23 @@ def gen_tensor_expr(var, info, recipe, indent=""):
     kind = recipe.kind
     if kind == "randn":
         L.append("%s = torch.randn(%s, dtype=%s)" % (var, shape, dt))
+    elif kind == "abs_randn":
+        L.append("%s = torch.abs(torch.randn(%s, dtype=%s) * %s[\"sigma\"])" % (var, shape, dt, info))
+    elif kind == "log_softmax":
+        L.append("%s = torch.nn.functional.log_softmax(torch.randn(%s, dtype=%s), -1)" % (var, shape, dt))
+    elif kind == "ln_stats_mean":
+        L.append("%s_ms = %s[\"shape\"]" % (var, info))
+        L.append("%s_red = tuple(_i for _i in range(len(x.shape)) if %s_ms[_i] == 1 and x.shape[_i] != 1)" % (var, var))
+        L.append("%s = x.mean(dim=%s_red, keepdim=True)" % (var, var))
+    elif kind == "ln_stats_rstd":
+        L.append("%s_red = tuple(_i for _i in range(len(x.shape)) if %s[\"shape\"][_i] == 1 and x.shape[_i] != 1)" % (var, info))
+        L.append("%s = torch.rsqrt((x - mean).pow(2).mean(dim=%s_red, keepdim=True) + 1e-05)" % (var, var))
+    elif kind == "bit_pattern":
+        # random bit patterns viewed as the dtype (Hans-style bit-packed inputs)
+        L.append("%s_n = 1" % var)
+        L.append("for _s in %s: %s_n *= _s" % (shape, var))
+        L.append("%s_b = torch.randint(0, 256, (%s_n * %s.itemsize,), dtype=torch.uint8)" % (var, var, dt))
+        L.append("%s = %s_b.view(%s).reshape(%s)" % (var, var, dt, shape))
     elif kind == "const":
         L.append("%s = torch.full(%s, %s[\"fill\"], dtype=%s)" % (var, shape, info, dt))
     elif kind == "rand":
@@ -619,6 +697,14 @@ def gen_tensor_expr(var, info, recipe, indent=""):
         for suffix, sub in (("_re", re), ("_im", im)):
             if sub.kind == "rand":
                 L.append("%s%s = torch.rand(%s, dtype=%s)" % (indent, var + suffix, shape, part_dt))
+            elif sub.kind == "rand_range":
+                L.append("%s%s = torch.rand(%s, dtype=%s) * (%s[\"range\"][1] - %s[\"range\"][0]) + %s[\"range\"][0]"
+                         % (indent, var + suffix, shape, part_dt, info, info, info))
+            elif sub.kind == "const":
+                L.append("%s%s = torch.full(%s, %s[\"fill\"], dtype=%s)" % (indent, var + suffix, shape, info, part_dt))
+            elif sub.kind == "randn_scaled":
+                L.append("%s%s = torch.randn(%s, dtype=%s) * %s[\"std\"] + %s[\"mean\"]"
+                         % (indent, var + suffix, shape, part_dt, info, info))
             else:
                 L.append("%s%s = torch.randn(%s, dtype=%s)" % (indent, var + suffix, shape, part_dt))
         L.append("%s%s = torch.complex(%s_re, %s_im).to(%s)" % (indent, var, var, var, dt))
@@ -654,6 +740,9 @@ def gen_arg_lines(var, info, recipe, indent="        "):
         sf = getattr(recipe, "sparse_from", None) or {}
         L.append("%s%s = torch.sparse_coo_tensor(%s, %s, %s[\"shape\"])"
                  % (indent, var, sf.get("indices", "indices"), sf.get("values", "values"), info))
+        return L
+    if recipe.kind == "empty":
+        L.append("%s%s = torch.empty(%s, dtype=DTYPE_MAP[%s[\"dtype\"]])" % (indent, var, "%s[\"shape\"]" % info, info))
         return L
     if recipe.kind == "attr":
         if getattr(recipe, "is_torch_dtype", False):
@@ -736,7 +825,8 @@ def gen_arg_lines(var, info, recipe, indent="        "):
         if getattr(recipe, "inject_seen", False):
             L.append("%sif %s.get(\"inject\"):" % (indent, info))
             L.append("%s    _f = %s.reshape(-1)" % (indent, var))
-            L.append("%s    _f[0] = float(%s[\"inject\"])" % (indent, info))
+            L.append("%s    _k = max(1, int(round(%s.get(\"inject_frac\", 0.0) * _f.numel())))" % (indent, info))
+            L.append("%s    _f[-_k:] = float(%s[\"inject\"])" % (indent, info))
             L.append("%s    %s = _f.reshape(%s.shape)" % (indent, var, var))
         return L
     # plain tensor
@@ -750,7 +840,8 @@ def gen_arg_lines(var, info, recipe, indent="        "):
     if getattr(recipe, "inject_seen", False):
         L.append("%sif %s.get(\"inject\"):" % (indent, info))
         L.append("%s    _f = %s.reshape(-1)" % (indent, var))
-        L.append("%s    _f[0] = float(%s[\"inject\"])" % (indent, info))
+        L.append("%s    _k = max(1, int(round(%s.get(\"inject_frac\", 0.0) * _f.numel())))" % (indent, info))
+        L.append("%s    _f[-_k:] = float(%s[\"inject\"])" % (indent, info))
         L.append("%s    %s = _f.reshape(%s.shape)" % (indent, var, var))
     return L
 
@@ -865,6 +956,25 @@ def convert_op(level, old_id, op_name, src_py, new_id):
         by_case = [[input_samples[s][c][j] for s in range(SAMPLES)] for c in range(n_cases)]
         r = classify_position(nm, by_case)
         vals = [input_samples[s][c][j] for s in range(SAMPLES) for c in range(n_cases)]
+        r_override = OP_OVERRIDES.get(op_name, {}).get("recipe_overrides", {}).get(nm)
+        if r_override:
+            r = Recipe(nm)
+            r.kind = r_override
+            r.dtype = next((v.dtype for v in vals if isinstance(v, torch.Tensor)),
+                           torch.float32)
+            r.requires_grad = False
+            input_recipes.append(r)
+            continue
+        if nm in OP_OVERRIDES.get(op_name, {}).get("empty_args", []):
+            # uninitialized output placeholder (torch.empty in the source):
+            # keep only dtype/shape, generate with torch.empty at runtime
+            r = Recipe(nm)
+            r.kind = "empty"
+            r.dtype = next((v.dtype for v in vals if isinstance(v, torch.Tensor)),
+                           torch.float32)
+            r.requires_grad = False
+            input_recipes.append(r)
+            continue
         r.requires_grad = any(isinstance(v, torch.Tensor) and v.requires_grad for v in vals)
         if r.kind == "sparse":
             r.sparse_from = OP_OVERRIDES.get(op_name, {}).get("sparse_from")
