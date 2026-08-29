@@ -1,0 +1,6 @@
+{"inputs": [{"name": "y_grad", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [1, 2, 12, 5, 8]}, {"name": "x", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [1, 2, 32, 25, 16]}]}
+{"inputs": [{"name": "y_grad", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [2, 3, 7, 9, 6]}, {"name": "x", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [2, 3, 17, 29, 16]}]}
+{"inputs": [{"name": "y_grad", "type": "tensor", "required": true, "dtype": "float32", "shape": [1, 2, 12, 5, 8]}, {"name": "x", "type": "tensor", "required": true, "dtype": "float32", "shape": [1, 2, 32, 25, 16]}]}
+{"inputs": [{"name": "y_grad", "type": "tensor", "required": true, "dtype": "float32", "shape": [2, 3, 7, 9, 6]}, {"name": "x", "type": "tensor", "required": true, "dtype": "float32", "shape": [2, 3, 17, 29, 16]}]}
+{"inputs": [{"name": "y_grad", "type": "tensor", "required": true, "dtype": "float16", "shape": [1, 2, 12, 5, 8]}, {"name": "x", "type": "tensor", "required": true, "dtype": "float16", "shape": [1, 2, 32, 25, 16]}]}
+{"inputs": [{"name": "y_grad", "type": "tensor", "required": true, "dtype": "float16", "shape": [2, 3, 7, 9, 6]}, {"name": "x", "type": "tensor", "required": true, "dtype": "float16", "shape": [2, 3, 17, 29, 16]}]}

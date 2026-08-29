@@ -1,0 +1,6 @@
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [1, 2, 32, 25, 16]}, {"name": "output_size", "type": "attr", "required": true, "dtype": "list", "value": [16, 16, 8]}]}
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [2, 3, 17, 29, 16]}, {"name": "output_size", "type": "attr", "required": true, "dtype": "list", "value": [7, 8, 9]}]}
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "float32", "shape": [1, 2, 32, 25, 16]}, {"name": "output_size", "type": "attr", "required": true, "dtype": "list", "value": [16, 16, 8]}]}
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "float32", "shape": [2, 3, 17, 29, 16]}, {"name": "output_size", "type": "attr", "required": true, "dtype": "list", "value": [7, 8, 9]}]}
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "float16", "shape": [1, 2, 32, 25, 16]}, {"name": "output_size", "type": "attr", "required": true, "dtype": "list", "value": [16, 16, 8]}]}
+{"inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "float16", "shape": [2, 3, 17, 29, 16]}, {"name": "output_size", "type": "attr", "required": true, "dtype": "list", "value": [7, 8, 9]}]}

@@ -1,0 +1,5 @@
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[25]]}, {"name": "scalar_weight", "type": "attr", "required": true, "dtype": "float", "value": 0.5}]}
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[32, 768, 10], [16, 256, 5]]}, {"name": "scalar_weight", "type": "attr", "required": true, "dtype": "float", "value": 0.25}]}
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "float16", "shapes": [[100]]}, {"name": "scalar_weight", "type": "attr", "required": true, "dtype": "float", "value": 0.75}]}
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "float32", "shapes": [[2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]}, {"name": "scalar_weight", "type": "attr", "required": true, "dtype": "float", "value": 1.0}]}
+{"inputs": [{"name": "x", "type": "tensor_list", "required": true, "dtype": "bfloat16", "shapes": [[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2]]}, {"name": "scalar_weight", "type": "attr", "required": true, "dtype": "float", "value": 0.0}]}

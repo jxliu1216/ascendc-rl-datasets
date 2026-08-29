@@ -1,0 +1,6 @@
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float32", "shape": [48, 64]}, {"name": "diagonal", "type": "attr", "required": true, "dtype": "int", "value": 0, "random": true, "range": [-1, 1]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float32", "shape": [256, 512]}, {"name": "diagonal", "type": "attr", "required": true, "dtype": "int", "value": 0, "random": true, "range": [-1, 1]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float32", "shape": [564, 128]}, {"name": "diagonal", "type": "attr", "required": true, "dtype": "int", "value": 0, "random": true, "range": [-1, 1]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float16", "shape": [192, 32]}, {"name": "diagonal", "type": "attr", "required": true, "dtype": "int", "value": -1, "random": true, "range": [-1, 1]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float16", "shape": [192, 128]}, {"name": "diagonal", "type": "attr", "required": true, "dtype": "int", "value": 0, "random": true, "range": [-1, 1]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float32", "shape": [256, 256]}, {"name": "diagonal", "type": "attr", "required": true, "dtype": "int", "value": -1, "random": true, "range": [-1, 1]}]}

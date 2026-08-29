@@ -1,0 +1,73 @@
+import torch
+import torch.nn as nn
+import json
+import os
+
+DTYPE_MAP = {
+    "float16": torch.float16,
+    "float32": torch.float32,
+    "float64": torch.float64,
+    "bfloat16": torch.bfloat16,
+    "int8": torch.int8,
+    "int16": torch.int16,
+    "int32": torch.int32,
+    "int64": torch.int64,
+    "uint8": torch.uint8,
+    "bool": torch.bool,
+    "complex64": torch.complex64,
+}
+
+from typing import List
+import torch
+import torch.nn as nn
+
+class Model(nn.Module):
+    """
+    实现ForeachDivList算子功能的模型。
+    """
+
+    def __init__(self):
+        """
+        初始化模型。
+        """
+        super(Model, self).__init__()
+
+    def forward(self, x1: List[torch.Tensor], x2: List[torch.Tensor]) -> List[torch.Tensor]:
+        """
+        实现ForeachDivList算子功能。
+
+        Args:
+            x1: 第一个输入张量列表
+            x2: 第二个输入张量列表
+
+        Returns:
+            两个输入张量列表相除后的结果张量列表
+        """
+        return [x / y for x, y in zip(x1, x2)]
+
+def get_input_groups():
+    json_path = os.path.join(os.path.dirname(__file__), 'cannops_level2_58_ForeachDivList.json')
+    with open(json_path, "r") as f:
+        cases = [json.loads(line) for line in f if line.strip()]
+
+    input_groups = []
+    for case in cases:
+        inputs = case["inputs"]
+        x1_info = inputs[0]
+        x2_info = inputs[1]
+
+        x1 = []
+        for _shape in x1_info["shapes"]:
+            _t = torch.rand({"dtype": x1_info["dtype"], "shape": _shape, "range": x1_info.get("range", [0, 1]), "mean": x1_info.get("mean", 0.0), "std": x1_info.get("std", 1.0), "value": x1_info.get("value")}["shape"], dtype=DTYPE_MAP[{"dtype": x1_info["dtype"], "shape": _shape, "range": x1_info.get("range", [0, 1]), "mean": x1_info.get("mean", 0.0), "std": x1_info.get("std", 1.0), "value": x1_info.get("value")}["dtype"]]) * ({"dtype": x1_info["dtype"], "shape": _shape, "range": x1_info.get("range", [0, 1]), "mean": x1_info.get("mean", 0.0), "std": x1_info.get("std", 1.0), "value": x1_info.get("value")}["range"][1] - {"dtype": x1_info["dtype"], "shape": _shape, "range": x1_info.get("range", [0, 1]), "mean": x1_info.get("mean", 0.0), "std": x1_info.get("std", 1.0), "value": x1_info.get("value")}["range"][0]) + {"dtype": x1_info["dtype"], "shape": _shape, "range": x1_info.get("range", [0, 1]), "mean": x1_info.get("mean", 0.0), "std": x1_info.get("std", 1.0), "value": x1_info.get("value")}["range"][0]
+            x1.append(_t)
+        x2 = []
+        for _shape in x2_info["shapes"]:
+            _t = torch.rand({"dtype": x2_info["dtype"], "shape": _shape, "range": x2_info.get("range", [0, 1]), "mean": x2_info.get("mean", 0.0), "std": x2_info.get("std", 1.0), "value": x2_info.get("value")}["shape"], dtype=DTYPE_MAP[{"dtype": x2_info["dtype"], "shape": _shape, "range": x2_info.get("range", [0, 1]), "mean": x2_info.get("mean", 0.0), "std": x2_info.get("std", 1.0), "value": x2_info.get("value")}["dtype"]]) * ({"dtype": x2_info["dtype"], "shape": _shape, "range": x2_info.get("range", [0, 1]), "mean": x2_info.get("mean", 0.0), "std": x2_info.get("std", 1.0), "value": x2_info.get("value")}["range"][1] - {"dtype": x2_info["dtype"], "shape": _shape, "range": x2_info.get("range", [0, 1]), "mean": x2_info.get("mean", 0.0), "std": x2_info.get("std", 1.0), "value": x2_info.get("value")}["range"][0]) + {"dtype": x2_info["dtype"], "shape": _shape, "range": x2_info.get("range", [0, 1]), "mean": x2_info.get("mean", 0.0), "std": x2_info.get("std", 1.0), "value": x2_info.get("value")}["range"][0]
+            x2.append(_t)
+
+        input_groups.append([x1, x2])
+    return input_groups
+
+
+def get_init_inputs():
+    return []

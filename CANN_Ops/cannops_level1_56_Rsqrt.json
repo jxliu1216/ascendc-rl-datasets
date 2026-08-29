@@ -1,0 +1,5 @@
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float16", "shape": [48, 128, 512], "range": [1.0, 1000.5]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float16", "shape": [96, 64, 1024], "range": [1.0, 1000.5]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float32", "shape": [32, 32, 768], "range": [1.0001788139343262, 1000.9998168945312]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "bfloat16", "shape": [48, 32, 4096], "range": [1.0, 996.0]}]}
+{"inputs": [{"name": "input", "type": "tensor", "required": true, "dtype": "float32", "shape": [48, 8192], "range": [1.0002384185791016, 1000.9990234375]}]}
