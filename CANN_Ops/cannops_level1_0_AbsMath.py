@@ -60,7 +60,7 @@ def get_input_groups():
             if _dt in (torch.int8, torch.int16, torch.int32, torch.int64, torch.uint8):
                 x = torch.randint(x_info["range"][0], x_info["range"][1] + 1, tuple(x_info["shape"]), dtype=_dt)
             elif _dt == torch.bool:
-                x = torch.rand(x_info["shape"]) > 0.5
+                x = torch.rand(x_info["shape"]) < x_info.get("true_frac", 0.5)
             else:
                 x = torch.randn(x_info["shape"], dtype=_dt)
 

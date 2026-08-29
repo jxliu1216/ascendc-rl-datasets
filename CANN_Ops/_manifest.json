@@ -4,7 +4,13 @@
     "old_id": 1,
     "op": "AbsMath",
     "new": "cannops_level1_0_AbsMath",
-    "status": "ok"
+    "status": "ok",
+    "drop_cases": [
+      15,
+      16,
+      17
+    ],
+    "note": "complex64 用例删除(aclnnAbs 不支持), 15/18 保留"
   },
   {
     "level": "level1",

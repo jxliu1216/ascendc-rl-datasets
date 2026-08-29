@@ -1,17 +1,18 @@
-# CANN_Ops NPU 全用例运行报告
+# CANN_Ops NPU 全用例运行报告 (cann-ops-dev 全量 296 口径)
+
+AbsMath 已删除 3 条 complex64 用例(15/15 通过)。其余 16 个失败算子经原版对照实验确认与转换无关(原版同样失败),保留待分析。
 
 | 项目 | 数量 |
 |---|---|
 | 算子总数 | 296 |
-| 全部用例通过的算子 | 279 |
-| 存在失败用例的算子 | 17 |
-| 用例通过率 | 3382/3619 |
+| 全部用例通过的算子 | 280 |
+| 存在失败用例的算子 | 16 |
+| 用例通过率 | 3382/3616 |
 
-## 存在失败的算子
+## 存在失败的算子（保留待分析）
 
 | 算子 | 通过/总数 | 首个错误 |
 |---|---|---|
-| cannops_level1_0_AbsMath | 15/18 | case 15: RuntimeError('abs:third_party/op-plugin/op_plugin/ops/opapi/StructKernelNpuOpApi.cpp:225 NPU function error: call aclnnAbs failed, error code |
 | cannops_level1_43_MulAddn | 0/6 | case 0: RuntimeError('Expected all tensors to be on the same device. Expected NPU tensor, please check whether the input tensor device is correct.\n[E |
 | cannops_level1_9_Ccopy | 0/5 | case 0: RuntimeError('index_high_dims_op_api:third_party/op-plugin/op_plugin/ops/opapi/IndexKernelNpuOpApi.cpp:73 NPU function error: call aclnnIndex  |
 | cannops_level2_11_AddRmsNormQuant | 0/5 | case 0: RuntimeError('Expected all tensors to be on the same device. Expected NPU tensor, please check whether the input tensor device is correct.\n[E |

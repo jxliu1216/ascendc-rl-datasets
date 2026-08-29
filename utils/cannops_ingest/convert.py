@@ -421,6 +421,8 @@ FORCE_VALUE_MAX = 300000  # cap for forced value storage (shape drivers, op over
 
 # per-op conversion overrides
 OP_OVERRIDES = {
+    # aclnnAbs does not support complex64 on NPU; drop the 3 complex cases
+    "AbsMath": {"drop_cases": [15, 16, 17]},
     "RoiAlignRotated": {"force_value_args": ["rois"]},
     "RoiAlignRotatedGrad": {"force_value_args": ["rois"]},
     # CPU aten._ctc_loss lacks bf16/fp16 kernels (original ran on NPU);
@@ -830,6 +832,11 @@ def convert_op(level, old_id, op_name, src_py, new_id):
     new_base = "cannops_%s_%d_%s" % (level, new_id, op_name)
     mod = load_module(src_py, tag, json_name="%d_%s.json" % (old_id, op_name))
     input_samples, init_groups = sample_op(mod)
+    drop = set(OP_OVERRIDES.get(op_name, {}).get("drop_cases", []))
+    if drop:
+        input_samples = [[case for c, case in enumerate(s) if c not in drop]
+                         for s in input_samples]
+        init_groups = [g for c, g in enumerate(init_groups) if c not in drop]
     n_cases = len(input_samples[0])
 
     fwd_names = sig_params(mod.Model.forward)

@@ -258,6 +258,17 @@ def verify_op(level, old_id, op_name, new_base):
     new_groups = [[norm(a) for a in g] for g in new.get_input_groups()]
     new_inits = [[norm(a) for a in g] for g in new.get_init_inputs()]
 
+    # intentionally dropped cases (e.g. NPU-unsupported dtypes): exclude the
+    # same case indices from the original side before all comparisons
+    try:
+        from convert import OP_OVERRIDES
+        drop = set(OP_OVERRIDES.get(op_name, {}).get("drop_cases", []))
+    except Exception:
+        drop = set()
+    if drop:
+        old_groups = [g for c, g in enumerate(old_groups) if c not in drop]
+        old_inits = [g for c, g in enumerate(old_inits) if c not in drop]
+
     # per-case json metadata: random attrs (exempt from exact compare) and
     # value-stored tensors (skip distribution check -- they ARE original values)
     random_attrs = {}
@@ -284,6 +295,8 @@ def verify_op(level, old_id, op_name, new_base):
     # 1. structural; the original generator may produce random shapes (derived
     # from random values) -- detect by sampling twice and exempt those positions
     old_groups_b = [[norm(a) for a in g] for g in old.get_input_groups()]
+    if drop:
+        old_groups_b = [g for c, g in enumerate(old_groups_b) if c not in drop]
     shape_unstable = set(shape_derived)
     for c, (ga, gb) in enumerate(zip(old_groups, old_groups_b)):
         for j, (aa, ab) in enumerate(zip(ga, gb)):
@@ -317,6 +330,8 @@ def verify_op(level, old_id, op_name, new_base):
     if not res["struct"]:
         new_samples = [new.get_input_groups() for _ in range(SAMPLES - 1)] + [new_groups]
         old_samples = [old.get_input_groups() for _ in range(SAMPLES - 1)] + [old_groups]
+        if drop:
+            old_samples = [[g for c, g in enumerate(s) if c not in drop] for s in old_samples]
         n_args = len(new_groups[0]) if new_groups else 0
         for j in range(n_args):
             if j in data_args:
