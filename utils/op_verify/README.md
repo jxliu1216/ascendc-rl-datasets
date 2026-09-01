@@ -58,7 +58,7 @@ python utils/op_verify/verify_cpu.py --dir CANN_Ops/src --only cannops_level1_0_
 另有少数算子使用 fp16 用例，而 PyTorch CPU 对部分算子没有 Half kernel（如 `replication_pad2d`）。
 因此 NPUKernelBench 只能用 verify_npu.py 验证。CANN_Ops 的参考实现为纯 aten 公共算子（CPU/NPU 双后端均有 kernel），两侧都适用。
 
-## 与 utils/cannops_ingest/ 的区别
+## 备注
 
-`cannops_ingest/` 是**入库转换期**工具（与 cann_ops_tmp 原版逐 case 对照），依赖本地未入库的
-`cann_ops_tmp/` 目录；`op_verify/` 是**入库后长期维护**的自包含验证，只依赖入库文件本身。
+本目录是算子资产的**长期验证入口**，自包含、只依赖入库文件本身。
+入库转换期的对照工具（cannops_ingest）已完成使命并从仓库移除，如需追溯可从 git 历史获取。
