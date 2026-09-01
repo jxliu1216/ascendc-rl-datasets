@@ -1058,6 +1058,28 @@ def convert_op(level, old_id, op_name, src_py, new_id):
     return new_base, {"unstable_args": unstable}
 
 
+def scan_manifest():
+    """Rebuild the op manifest by scanning cann_ops_tmp (no report/ dependency).
+    new ids: 0-based per level, ordered by original numeric id. status is "ok"
+    iff the converted file exists in OUT_DIR."""
+    entries = []
+    for level in ("level1", "level2", "level3"):
+        lvl_dir = os.path.join(SRC_DIR, level)
+        ops = []
+        for fn in os.listdir(lvl_dir):
+            m = re.match(r"^(\d+)_(.+)\.py$", fn)
+            if m:
+                ops.append((int(m.group(1)), m.group(2)))
+        ops.sort()
+        for new_id, (old_id, op) in enumerate(ops):
+            new_base = "cannops_%s_%d_%s" % (level, new_id, op)
+            entries.append({"level": level, "old_id": old_id, "op": op,
+                            "new": new_base,
+                            "status": "ok" if os.path.exists(
+                                os.path.join(OUT_DIR, new_base + ".py")) else "fail"})
+    return entries
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     os.makedirs(REPORT_DIR, exist_ok=True)

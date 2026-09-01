@@ -24,8 +24,6 @@
 | `src/` | 全量用例 | 离线复测、最终验收等不计成本的场景 |
 | `src_simple/` | 人工精简用例(保留 dtype/shape/attr 代表性组合) | **RL 在线训练**(评测逐 case 串行且独占 NPU 卡锁,用例数直接决定 session 时长与超时率;reward 只看 correctness 二值 + speedup,case 数不进入 reward 公式) |
 
-`src/` 中另保留 `{op}_simple.json`,为精简用例的原始存档(与 `src_simple/{op}.json` 内容一致)。
-
 ## 使用方式
 
 训练时按需将配置指向对应目录(两个目录都可直接被 pipeline 消费):
