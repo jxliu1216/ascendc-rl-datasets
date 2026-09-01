@@ -46,6 +46,18 @@ python utils/op_verify/verify_cpu.py --dir CANN_Ops/src --only cannops_level1_0_
 - CPU 侧：`torch`（本仓库使用 `/root/miniconda3/envs/coding_env`）
 - NPU 侧：另需 `torch_npu` 与昇腾驱动（worker 自动 `source /usr/local/Ascend/ascend-toolkit/set_env.sh`）
 
+## 适用范围
+
+| 数据集 | verify_cpu.py | verify_npu.py |
+|---|---|---|
+| `CANN_Ops/src` | ✅ 适用（280/280 通过） | ✅ 适用（3382/3382 用例通过） |
+| `NPUKernelBench/src` | ❌ **不适用** | ✅ 适用 |
+
+**verify_cpu.py 不适用于 NPUKernelBench 的原因**：该数据集的参考实现是按「torch NPU 标杆」设计的——13/43 个算子的 Model 直接调用 `torch_npu.npu_*` 专属算子（如 `npu_dynamic_quant`、`npu_iou`、`npu_kv_rmsnorm_rope_cache`，见各文件 forward），这些算子注册在 `npu::` 命名空间、只有 NPU 后端 kernel，CPU 上前向必然报
+`NotImplementedError: Could not run 'npu::...' with arguments from the 'CPU' backend`；
+另有少数算子使用 fp16 用例，而 PyTorch CPU 对部分算子没有 Half kernel（如 `replication_pad2d`）。
+因此 NPUKernelBench 只能用 verify_npu.py 验证。CANN_Ops 的参考实现为纯 aten 公共算子（CPU/NPU 双后端均有 kernel），两侧都适用。
+
 ## 与 utils/cannops_ingest/ 的区别
 
 `cannops_ingest/` 是**入库转换期**工具（与 cann_ops_tmp 原版逐 case 对照），依赖本地未入库的
