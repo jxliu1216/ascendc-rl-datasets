@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Orchestrate per-op re-conversion+verification in separate processes.
 
-Targets: ops that are FAIL in the latest /tmp/verify_partial.jsonl state or
-failed at convert time in CANN_Ops/_manifest.json. Each target runs in a fresh
-subprocess (fix_one.py) so a crash/OOM only kills one op. Results are appended
-to /tmp/verify_partial.jsonl incrementally; the final report dedupes by op
-keeping the LAST entry.
+Targets: ops that are FAIL in the latest /tmp/verify_partial.jsonl state.
+The op manifest is derived by scanning cann_ops_tmp (no report/ dependency).
+Each target runs in a fresh subprocess (fix_one.py) so a crash/OOM only kills
+one op. Results are appended to /tmp/verify_partial.jsonl incrementally; the
+final report dedupes by op keeping the LAST entry.
 
 Usage: fix_round2.py [op ...]   # default: all current FAILs
 """
@@ -36,23 +36,15 @@ def load_state():
 
 def main():
     out_dir = verify_incr.verify.OUT_DIR
-    manifest = json.load(open(os.path.join(out_dir, "..", "report", "_manifest.json")))
+    import convert
+    # manifest derived by scanning cann_ops_tmp (no report/ dependency);
+    # only ops whose converted file exists in out_dir are considered
+    manifest = [m for m in convert.scan_manifest()
+                if os.path.exists(os.path.join(out_dir, m["new"] + ".py"))]
     results = load_state()
 
-    # new_id: take from the manifest's own "new" field (main-subset manifests
-    # have gaps after op removal, so re-enumeration would shift ids)
-    new_ids = {}
-    for m in manifest:
-        if m.get("new"):
-            new_ids[(m["level"], m["old_id"], m["op"])] = int(m["new"].split("_")[2])
-    # fallback for entries never converted (status fail): order within level
-    by_level = {}
-    for m in manifest:
-        by_level.setdefault(m["level"], []).append(m)
-    for level, ops in by_level.items():
-        ops.sort(key=lambda x: x["old_id"])
-        for i, m in enumerate(ops):
-            new_ids.setdefault((m["level"], m["old_id"], m["op"]), i)
+    new_ids = {(m["level"], m["old_id"], m["op"]): int(m["new"].split("_")[2])
+               for m in manifest}
 
     only = set(sys.argv[1:])
     targets = []

@@ -419,7 +419,11 @@ def _arg_name(mod, j):
 
 
 def main():
-    manifest = json.load(open(os.path.join(OUT_DIR, "..", "report", "_manifest.json")))
+    import convert
+    # manifest derived by scanning cann_ops_tmp (CANN_Ops/report/ is not
+    # tracked anymore); only ops whose converted file exists are verified
+    manifest = [m for m in convert.scan_manifest()
+                if os.path.exists(os.path.join(OUT_DIR, m["new"] + ".py"))]
     only = sys.argv[1:] if len(sys.argv) > 1 else None
     results = []
     for m in manifest:

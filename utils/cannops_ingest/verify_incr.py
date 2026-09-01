@@ -42,6 +42,7 @@ def scan_log():
 
 
 def write_report(results):
+    os.makedirs(os.path.dirname(os.path.abspath(REPORT)), exist_ok=True)
     n_pass = sum(1 for r in results if r["status"] == "PASS")
     n_rev = sum(1 for r in results if r["status"] == "REVIEW")
     n_fail = sum(1 for r in results if r["status"] == "FAIL")

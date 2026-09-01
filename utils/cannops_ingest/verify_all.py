@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Full CPU verification of every op in CANN_Ops/report/_manifest.json,
-without reconversion. 3 subprocess workers (OOM isolation). Rewrites
-CANN_Ops/report/_ingest_report.md. Exit 0 iff zero FAIL.
+"""Full CPU verification of every op under CANN_Ops/src (vs cann_ops_tmp
+originals), without reconversion. 3 subprocess workers (OOM isolation).
+Rewrites the report via verify_incr.write_report. Exit 0 iff zero FAIL.
 
 Usage: verify_all.py
 """
@@ -16,14 +16,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PY = "/root/miniconda3/envs/coding_env/bin/python"
 
 sys.path.insert(0, HERE)
+import convert
 import verify_incr
 
 
 def main():
-    report_dir = os.path.join(HERE, "..", "..", "CANN_Ops", "report")
-    manifest = json.load(open(os.path.join(report_dir, "_manifest.json")))
+    out_dir = os.path.join(HERE, "..", "..", "CANN_Ops", "src")
+    manifest = [m for m in convert.scan_manifest()
+                if os.path.exists(os.path.join(out_dir, m["new"] + ".py"))]
     targets = [(m["level"], m["old_id"], m["op"], int(m["new"].split("_")[2]), m["new"])
-               for m in manifest if m["status"] == "ok"]
+               for m in manifest]
     print("verify targets: %d" % len(targets), flush=True)
 
     def run(t):
