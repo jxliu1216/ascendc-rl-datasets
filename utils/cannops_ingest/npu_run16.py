@@ -22,13 +22,14 @@ SET_ENV = "source /usr/local/Ascend/ascend-toolkit/set_env.sh"
 N_WORKERS = 16
 
 
-def run_chunk(worker, bases):
+def run_chunk(worker, bases, stagger=1.5):
     out_path = "/tmp/npu_chunk_%d.jsonl" % worker
     if os.path.exists(out_path):
         os.remove(out_path)
     env = dict(os.environ)
     env["ASCEND_RT_VISIBLE_DEVICES"] = str(worker)
-    cmd = "%s && %s %s --out %s %s" % (
+    cmd = "sleep %.1f && %s && %s %s --out %s %s" % (
+        worker * stagger,  # stagger NPU context init to avoid 16-process races
         SET_ENV, PY, os.path.join(HERE, "npu_batch.py"), out_path, " ".join(bases))
     p = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True,
                        timeout=7200, env=env)
@@ -49,12 +50,12 @@ def run_chunk(worker, bases):
     return results
 
 
-def sweep(bases, tag):
-    chunks = [bases[i::N_WORKERS] for i in range(N_WORKERS)]
+def sweep(bases, tag, workers=N_WORKERS, stagger=1.5):
+    chunks = [bases[i::workers] for i in range(workers)]
     chunks = [c for c in chunks if c]
     results = []
-    with ThreadPoolExecutor(max_workers=N_WORKERS) as ex:
-        futs = {ex.submit(run_chunk, w, c): w for w, c in enumerate(chunks)}
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futs = {ex.submit(run_chunk, w, c, stagger): w for w, c in enumerate(chunks)}
         for fut in as_completed(futs):
             results.extend(fut.result())
             print("[%s] chunk done (%d results)" % (tag, len(results)), flush=True)
@@ -70,13 +71,26 @@ def main():
     print("total ops: %d" % len(bases), flush=True)
     t0 = time.time()
     results = sweep(bases, "pass1")
-    # retry crashed ops once
-    crashed = [r["op"] for r in results if r["total"] <= 0]
+    # retry crashed ops and ops whose every case failed at NPU device init
+    # (transient infra errors under 16-process init races)
+    crashed = [r["op"] for r in results
+               if r["total"] <= 0 or
+               (r["passed"] == 0 and r["fails"] and "Initialize" in r["fails"][0])]
     if crashed:
-        print("retrying %d crashed ops" % len(crashed), flush=True)
+        print("retrying %d crashed/init-failed ops" % len(crashed), flush=True)
         retry = sweep(crashed, "pass2")
-        ok = {r["op"]: r for r in retry if r["total"] > 0}
+        ok = {r["op"]: r for r in retry if r["total"] > 0 and r["passed"] > 0}
         results = [ok.get(r["op"], r) for r in results]
+        # pass3: remaining init failures are contention victims; rerun them
+        # strictly sequentially (single worker, zero concurrency)
+        still = [r["op"] for r in results
+                 if r["total"] <= 0 or
+                 (r["passed"] == 0 and r["fails"] and "Initialize" in r["fails"][0])]
+        if still:
+            print("pass3 sequential retry for %d ops" % len(still), flush=True)
+            retry3 = sweep(still, "pass3", workers=1, stagger=0.0)
+            ok3 = {r["op"]: r for r in retry3 if r["total"] > 0 and r["passed"] > 0}
+            results = [ok3.get(r["op"], r) for r in results]
 
     results.sort(key=lambda r: r["op"])
     bad = [r for r in results if r["passed"] != r["total"]]
