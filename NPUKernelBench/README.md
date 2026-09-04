@@ -1,39 +1,39 @@
-# NPUKernelBench 数据集目录说明
+# NPUKernelBench Dataset
 
-本目录提供 AscendC 算子生成 RL 训练的任务数据(算子持续补充中)。
+Task data for AscendC operator-generation RL training (operators are continuously being added).
 
-## 文件构成
+## Directory contents
 
-- `operator_tasks.npukernelbench.jsonl` — 任务清单,每行 `{prompt, label, metadata}`;训练侧(slime `--prompt-data`)读取,`metadata.op_name` 是关联算子文件的键
-- `src/` — **全量用例版**算子资产目录
-- `src_simple/` — **精简用例版**算子资产目录(人工精简)
+- `operator_tasks.npukernelbench.jsonl` — task list, one `{prompt, label, metadata}` row per op;
+  consumed by the training side (slime `--prompt-data`); `metadata.op_name` is the key that links
+  each row to its op files
+- `src/` — op assets with the **full** case set
+- `src_simple/` — op assets with **manually trimmed** case sets
 
-## src/ 与 src_simple/ 的差异
+## Difference between src/ and src_simple/
 
-两个目录**结构完全相同**,每个算子一对文件:
+The two directories have **identical structure**: one file pair per operator:
 
-| 文件 | 内容 |
+| File | Content |
 |---|---|
-| `{op}.py` | torch 参考实现(`class Model` + `get_input_groups()`/`get_init_inputs()`)。`get_input_groups()` 读取**同目录、同名**的 `{op}.json`(文件名为硬编码,保证 judge 将参考实现重命名为 `model.py` 注入工程目录后仍能命中同目录的用例文件) |
-| `{op}.json` | 测试用例,JSON Lines,每行一个 `{"inputs": [...]}` case |
+| `{op}.py` | torch reference implementation (`class Model` + `get_input_groups()`/`get_init_inputs()`). `get_input_groups()` hardcodes the sibling `{op}.json` filename, so the judge can still find the case file after renaming the reference implementation to `model.py` when injecting it |
+| `{op}.json` | test cases, JSON Lines, one `{"inputs": [...]}` case per line |
 
-唯一差异是 **`{op}.json` 的用例数量**:
+The only difference is the **number of cases** in `{op}.json`:
 
-| 目录 | 用例规模 | 用途 |
+| Directory | Case set | Purpose |
 |---|---|---|
-| `src/` | 全量用例 | 离线复测、最终验收等不计成本的场景 |
-| `src_simple/` | 人工精简用例(保留 dtype/shape/attr 代表性组合) | **RL 在线训练**(评测逐 case 串行且独占 NPU 卡锁,用例数直接决定 session 时长与超时率;reward 只看 correctness 二值 + speedup,case 数不进入 reward 公式) |
+| `src/` | full cases | offline re-runs, final acceptance and other cost-insensitive scenarios |
+| `src_simple/` | manually trimmed (representative dtype/shape/attr combinations kept) | **online RL training** (evaluation runs cases serially while holding the NPU card lock, so case count directly drives session length and timeout rate; reward only looks at binary correctness + speedup, case count does not enter the reward formula) |
 
-## 使用方式
 
-训练时按需将配置指向对应目录(两个目录都可直接被 pipeline 消费):
+## Notes
 
-- `operator_runtime.task_assets_dir`(profile.t2a.yaml)→ 用例 JSON 来源
-- `operator_tasks_dir`(polar_config.yaml)→ 参考实现 .py 来源(task_source 内联通道)
-
-## 注意事项
-
-- 算子文件统一命名为 `npukernelbench_level{N}_{id}_{Name}.py` / `.json`,`npukernelbench_` 前缀用于区分后续扩充的其他数据集
-- 新增算子时:jsonl、两个目录的 `{op}.py` / `{op}.json` 需同步补齐;`{op}.py` 中 `get_input_groups()` 的 json 文件名**必须硬编码**为 `{op}.json`,不得使用 `__file__` basename 推导(judge 注入时文件会被重命名为 `model.py`)
-- 修改 `src/` 的 `.py` 后需同步到 `src_simple/`(两目录 .py 内容一致)
-- 精简用例**每算子保持 ≥8 条**:outcome reward 的 correctness 失败档按 `0.3 + 0.1×(passed/total)` 计分,case 数过少会让通过率粒度过粗(如 3 case 时每 case 摆 0.033、档内上限仅 0.367)
+- Op files are uniformly named `npukernelbench_level{N}_{id}_{Name}.py` / `.json`; the
+  `npukernelbench_` prefix distinguishes this dataset from others added later
+- When adding operators, the jsonl and both directories' `{op}.py` / `{op}.json` must all be
+  updated together; the json filename inside `get_input_groups()` **must be hardcoded** as
+  `{op}.json` — never derive it from the `__file__` basename (the judge renames the file to
+  `model.py` when injecting it)
+- After editing a `.py` in `src/`, sync it to `src_simple/` (the .py files in both directories are identical)
+- Keep **10 cases per op** in the trimmed set
